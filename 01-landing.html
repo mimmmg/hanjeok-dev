@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>랜딩 — 한적</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══ 0 랜딩 ═══════════════════════════════════════════════════
+     이미지 위에 카피를 얹고, 아래에 이 앱이 하는 일 세 가지를 둔다.
+     상단 크롬(뒤로·제목·프로필)은 이 화면에만 없다.
+     [장소 검색하기] → 검색 진입
+     ═════════════════════════════════════════════════════════════ -->
+<div class="device">
+
+  <div class="scroll">
+
+    <!-- 히어로 -->
+    <figure class="slot zin" style="height:460px;padding:0 var(--pad) 36px">
+      <figcaption class="t-slot slot-tag">[ 이미지 자리 · 이른 아침의 고궁 전경 ]</figcaption>
+      <span class="slot-fade" aria-hidden="true"></span>
+      <div style="position:relative;display:flex;flex-direction:column;gap:14px">
+        <span class="icon-btn" style="width:44px;height:44px;background:var(--card);box-shadow:0 4px 20px rgba(27,48,34,.08);color:#725B29" aria-hidden="true">
+          <span class="ms ms-fill" style="font-size:22px">explore</span>
+        </span>
+        <h1 class="t-hero">붐비는 주말은<br>피해서 떠나요</h1>
+        <p class="t-lead" style="max-width:300px">검색하는 순간 혼잡도가 함께 보입니다. 붐빈다면 근처의 여유로운 대안까지 나란히 비교해 드려요.</p>
+      </div>
+    </figure>
+
+    <!-- 주동작 -->
+    <div class="pad zin d1" style="padding-bottom:var(--s7)">
+      <a class="btn btn-terra" href="02-search.html">
+        장소 검색하기
+        <span class="ms" style="font-size:20px" aria-hidden="true">arrow_forward</span>
+      </a>
+    </div>
+
+    <!-- 이 앱이 하는 일 세 가지 -->
+    <ul class="pad" style="display:flex;flex-direction:column;gap:var(--s5);padding-bottom:var(--s8)">
+      <li class="feat zin d1">
+        <span class="feat-ico" aria-hidden="true"><span class="ms" style="font-size:22px">sensors</span></span>
+        <div>
+          <h2 class="t-name" style="font-size:var(--f-body)">검색과 동시에 혼잡도</h2>
+          <p class="t-label" style="margin-top:5px">한국관광공사 관광지 데이터로 시간대별 혼잡 지수를 예측합니다.</p>
+        </div>
+      </li>
+      <li class="feat zin d2">
+        <span class="feat-ico" aria-hidden="true"><span class="ms" style="font-size:22px">compare_arrows</span></span>
+        <div>
+          <h2 class="t-name" style="font-size:var(--f-body)">대안은 항상 여러 곳</h2>
+          <p class="t-label" style="margin-top:5px">이동 시간·날씨·접근성을 나란히 놓고 직접 고를 수 있어요.</p>
+        </div>
+      </li>
+      <li class="feat zin d3">
+        <span class="feat-ico" aria-hidden="true"><span class="ms" style="font-size:22px">bookmarks</span></span>
+        <div>
+          <h2 class="t-name" style="font-size:var(--f-body)">관심 장소 한 번에 훑기</h2>
+          <p class="t-label" style="margin-top:5px">담아둔 후보를 혼잡도 순으로 넘겨보며 주말 계획을 정리하세요.</p>
+        </div>
+      </li>
+    </ul>
+
+  </div>
+
+</div>
+</body>
+</html>

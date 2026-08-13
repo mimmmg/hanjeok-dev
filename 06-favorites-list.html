@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>관심 장소함 · 목록 — 한적</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══ 5 관심 장소함 · 목록 ═════════════════════════════════════
+     담아둔 곳을 혼잡도 낮은 순으로 세운다. 각 항목에 하루 흐름을
+     작은 막대로 얹어, 목록만 훑어도 언제 가야 할지 가늠된다.
+     [하나씩 훑기] → 07 / 항목 → 장소 상세
+     ═════════════════════════════════════════════════════════════ -->
+<div class="device">
+
+  <header class="chrome">
+    <span style="width:var(--s2)"></span>
+    <h1 class="chrome-title">관심 장소함</h1>
+    <span class="avatar" aria-label="지우">지우</span>
+  </header>
+
+  <div class="scroll pad" style="padding-top:var(--s5)">
+
+    <!-- 보기 방식 -->
+    <div class="segbar zin" role="tablist" aria-label="보기 방식">
+      <span class="seg is-on" role="tab" aria-selected="true">
+        <span class="ms" style="font-size:18px" aria-hidden="true">list</span>목록
+      </span>
+      <a class="seg" href="07-favorites-glance.html" role="tab" aria-selected="false">
+        <span class="ms" style="font-size:18px" aria-hidden="true">style</span>하나씩 훑기
+      </a>
+    </div>
+
+    <p class="t-label zin d1" style="margin:var(--s4) 0 var(--s3)">2개 장소 · 혼잡도 낮은 순</p>
+
+    <ul style="display:flex;flex-direction:column;gap:var(--s3)">
+
+      <!-- 남산서울타워 76 혼잡 -->
+      <li class="card zin d1">
+        <div class="row-between">
+          <a href="04-detail.html" style="flex:1;min-width:0">
+            <h2 class="t-name">남산서울타워</h2>
+            <div class="row" style="gap:5px;margin-top:5px">
+              <span class="ms" style="font-size:15px;color:var(--muted)" aria-hidden="true">near_me</span>
+              <span class="t-caption">5.1km · 버스 24분</span>
+            </div>
+          </a>
+          <div class="row" style="gap:var(--s3)">
+            <div style="text-align:right">
+              <span class="idx-sm fg-busy">76</span>
+              <span class="t-caption fg-busy" style="display:block;margin-top:3px;font-weight:600">혼잡</span>
+            </div>
+            <button type="button" class="icon-btn" style="width:36px;height:36px;color:var(--terra-dark)" aria-label="남산서울타워를 관심 장소함에서 빼기">
+              <span class="ms ms-fill" style="font-size:20px" aria-hidden="true">favorite</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 하루 흐름 스파크 -->
+        <div class="row" style="gap:3px;align-items:flex-end;height:28px;margin-top:var(--s3)" role="img" aria-label="하루 혼잡 흐름. 오후 2시에 가장 붐빔">
+          <span style="flex:1;height:44%;border-radius:3px 3px 0 0" class="fill-mid"></span>
+          <span style="flex:1;height:66%;border-radius:3px 3px 0 0" class="fill-mid"></span>
+          <span style="flex:1;height:82%;border-radius:3px 3px 0 0" class="fill-busy"></span>
+          <span style="flex:1;height:74%;border-radius:3px 3px 0 0" class="fill-busy"></span>
+          <span style="flex:1;height:100%;border-radius:3px 3px 0 0" class="fill-busy"></span>
+        </div>
+        <p class="t-caption" style="margin-top:var(--s2)">예상 피크 14시</p>
+      </li>
+
+      <!-- 경복궁 88 혼잡 -->
+      <li class="card zin d2">
+        <div class="row-between">
+          <a href="04-detail.html" style="flex:1;min-width:0">
+            <h2 class="t-name">경복궁</h2>
+            <div class="row" style="gap:5px;margin-top:5px">
+              <span class="ms" style="font-size:15px;color:var(--muted)" aria-hidden="true">near_me</span>
+              <span class="t-caption">2.1km · 지하철 12분</span>
+            </div>
+          </a>
+          <div class="row" style="gap:var(--s3)">
+            <div style="text-align:right">
+              <span class="idx-sm fg-busy">88</span>
+              <span class="t-caption fg-busy" style="display:block;margin-top:3px;font-weight:600">혼잡</span>
+            </div>
+            <button type="button" class="icon-btn" style="width:36px;height:36px;color:var(--terra-dark)" aria-label="경복궁을 관심 장소함에서 빼기">
+              <span class="ms ms-fill" style="font-size:20px" aria-hidden="true">favorite</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="row" style="gap:3px;align-items:flex-end;height:28px;margin-top:var(--s3)" role="img" aria-label="하루 혼잡 흐름. 오후 2시에 가장 붐빔">
+          <span style="flex:1;height:50%;border-radius:3px 3px 0 0" class="fill-mid"></span>
+          <span style="flex:1;height:85%;border-radius:3px 3px 0 0" class="fill-busy"></span>
+          <span style="flex:1;height:100%;border-radius:3px 3px 0 0" class="fill-busy"></span>
+          <span style="flex:1;height:74%;border-radius:3px 3px 0 0" class="fill-busy"></span>
+          <span style="flex:1;height:41%;border-radius:3px 3px 0 0" class="fill-calm"></span>
+        </div>
+        <p class="t-caption" style="margin-top:var(--s2)">예상 피크 14시</p>
+      </li>
+
+    </ul>
+
+    <!-- 둘 다 혼잡할 때 다음 행동을 준다 -->
+    <div class="hint zin d3" style="margin:var(--s5) 0 var(--s8)">
+      <div class="row" style="align-items:flex-start">
+        <span class="hint-ico" aria-hidden="true"><span class="ms" style="font-size:20px">lightbulb</span></span>
+        <div style="flex:1">
+          <h3 class="t-name" style="font-size:var(--f-body)">담아둔 두 곳 모두 붐벼요</h3>
+          <p class="t-label" style="margin-top:5px;color:var(--body)">경복궁 88, 남산서울타워 76. 둘 다 기준(70)을 넘었어요. 근처의 여유로운 곳을 함께 보시겠어요?</p>
+        </div>
+      </div>
+      <a class="btn btn-ink btn-sm" style="margin-top:var(--s4)" href="05-alternatives.html">대안 3곳 나란히 비교</a>
+    </div>
+
+  </div>
+
+  <nav class="tabbar" aria-label="주요 메뉴">
+    <a class="tab" href="02-search.html"><span class="ms" aria-hidden="true">explore</span>탐색</a>
+    <span class="tab is-on" aria-current="page"><span class="ms ms-fill" aria-hidden="true">favorite</span>관심 장소함</span>
+  </nav>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>검색 결과 — 한적</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══ 2 검색 결과 ══════════════════════════════════════════════
+     혼잡도 낮은 순이 기본 정렬 — 이 앱은 붐비는 곳을 알려주는 게
+     아니라 여유로운 곳을 찾아주는 도구다.
+
+     왼쪽 체크박스로 여러 곳을 골라 한 번에 담을 수 있다.
+     하나라도 고르면 하단에 일괄 담기 바가 올라온다.
+
+     경복궁이 기준(70) 이상이므로 아래에 대안 안내 카드가 붙는다.
+     카드 → 장소 상세 / 대안 비교 → 대안 비교
+     ═════════════════════════════════════════════════════════════ -->
+<div class="device">
+
+  <header class="chrome">
+    <a class="icon-btn" href="02-search.html" aria-label="뒤로"><span class="ms" aria-hidden="true">arrow_back</span></a>
+    <h1 class="chrome-title">검색 결과</h1>
+    <span class="avatar" aria-label="지우">지우</span>
+  </header>
+
+  <div class="scroll">
+
+    <div class="pad row-between zin" style="padding-top:var(--s5);padding-bottom:var(--s4)">
+      <p class="t-label">4곳 · 혼잡도 예측 포함</p>
+      <button type="button" class="row" style="gap:6px;color:var(--terra-link);font:600 var(--f-caption)/1 var(--display)">
+        <span class="ms" style="font-size:18px" aria-hidden="true">swap_vert</span>혼잡도 낮은 순
+      </button>
+    </div>
+
+    <ul class="pad" style="display:flex;flex-direction:column;gap:var(--s3);padding-bottom:var(--s5)">
+
+      <!-- 여유 20 -->
+      <li>
+        <a class="card zin" href="04-detail.html">
+          <div class="row">
+            <button type="button" class="pick" data-pick aria-pressed="false" aria-label="서울숲 성수 선택">
+              <span class="pick-box" aria-hidden="true"><span class="ms">check</span></span>
+            </button>
+            <span class="thumb" style="width:56px;height:56px" aria-hidden="true"><span class="t-slot">사진</span></span>
+            <div style="flex:1;min-width:0">
+              <div class="row-between">
+                <h2 class="t-name">서울숲 성수</h2>
+                <span class="idx-sm fg-calm" aria-label="혼잡 지수 20">20</span>
+              </div>
+              <p class="t-caption" style="margin-top:3px">공원 · 카페 · 6.4km</p>
+              <div class="gauge" style="margin-top:var(--s2)">
+                <span class="gauge-fill fill-calm" style="display:block;width:20%"></span>
+                <span class="gauge-tick at45" aria-hidden="true"></span><span class="gauge-tick at70" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+        </a>
+      </li>
+
+      <!-- 여유 24 -->
+      <li>
+        <a class="card zin d1" href="04-detail.html">
+          <div class="row">
+            <button type="button" class="pick" data-pick aria-pressed="false" aria-label="덕수궁 선택">
+              <span class="pick-box" aria-hidden="true"><span class="ms">check</span></span>
+            </button>
+            <span class="thumb" style="width:56px;height:56px" aria-hidden="true"><span class="t-slot">사진</span></span>
+            <div style="flex:1;min-width:0">
+              <div class="row-between">
+                <h2 class="t-name">덕수궁</h2>
+                <span class="idx-sm fg-calm" aria-label="혼잡 지수 24">24</span>
+              </div>
+              <p class="t-caption" style="margin-top:3px">역사 유적지 · 1.4km</p>
+              <div class="gauge" style="margin-top:var(--s2)">
+                <span class="gauge-fill fill-calm" style="display:block;width:24%"></span>
+                <span class="gauge-tick at45" aria-hidden="true"></span><span class="gauge-tick at70" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+        </a>
+      </li>
+
+      <!-- 보통 54 -->
+      <li>
+        <a class="card zin d2" href="04-detail.html">
+          <div class="row">
+            <button type="button" class="pick" data-pick aria-pressed="false" aria-label="창덕궁 선택">
+              <span class="pick-box" aria-hidden="true"><span class="ms">check</span></span>
+            </button>
+            <span class="thumb" style="width:56px;height:56px" aria-hidden="true"><span class="t-slot">사진</span></span>
+            <div style="flex:1;min-width:0">
+              <div class="row-between">
+                <h2 class="t-name">창덕궁</h2>
+                <span class="idx-sm fg-mid" aria-label="혼잡 지수 54">54</span>
+              </div>
+              <p class="t-caption" style="margin-top:3px">역사 유적지 · 2.8km</p>
+              <div class="gauge" style="margin-top:var(--s2)">
+                <span class="gauge-fill fill-mid" style="display:block;width:54%"></span>
+                <span class="gauge-tick at45" aria-hidden="true"></span><span class="gauge-tick at70" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+        </a>
+      </li>
+
+      <!-- 혼잡 88 · 검색어 당사자 -->
+      <li>
+        <a class="card zin d2" href="04-detail.html" style="background:linear-gradient(var(--busy-tint),var(--busy-tint)) padding-box,var(--card);border-color:rgba(223,109,65,.22)">
+          <div class="row">
+            <button type="button" class="pick" data-pick aria-pressed="false" aria-label="경복궁 선택">
+              <span class="pick-box" aria-hidden="true"><span class="ms">check</span></span>
+            </button>
+            <span class="thumb" style="width:56px;height:56px" aria-hidden="true"><span class="t-slot">사진</span></span>
+            <div style="flex:1;min-width:0">
+              <div class="row-between">
+                <h2 class="t-name">경복궁</h2>
+                <span class="idx-sm fg-busy" aria-label="혼잡 지수 88">88</span>
+              </div>
+              <p class="t-caption" style="margin-top:3px">역사 유적지 · 2.1km</p>
+              <div class="gauge" style="margin-top:var(--s2);background:rgba(255,255,255,.7)">
+                <span class="gauge-fill fill-busy" style="display:block;width:88%"></span>
+                <span class="gauge-tick at45" aria-hidden="true"></span><span class="gauge-tick at70" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+        </a>
+      </li>
+
+    </ul>
+
+    <p class="pad t-caption zin d2" style="padding-bottom:var(--s5)">
+      왼쪽 체크박스로 여러 곳을 골라 한 번에 담을 수 있어요.
+    </p>
+
+    <!-- 기준(70) 넘는 곳이 있을 때만 붙는 안내 -->
+    <div class="pad zin d3" style="padding-bottom:var(--s8)">
+      <div class="hint">
+        <div class="row" style="align-items:flex-start">
+          <span class="hint-ico" aria-hidden="true"><span class="ms" style="font-size:20px">lightbulb</span></span>
+          <div style="flex:1">
+            <h3 class="t-name" style="font-size:var(--f-body)">여유로운 대안이 있어요</h3>
+            <p class="t-label" style="margin-top:5px;color:var(--body)">경복궁은 지금 88로 붐빕니다. 지하철 22분 거리의 서울숲 성수는 20으로 여유로워요.</p>
+          </div>
+        </div>
+        <a class="btn btn-ink btn-sm" style="margin-top:var(--s4)" href="05-alternatives.html">대안 3곳 나란히 비교</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 하나라도 고르면 올라온다 -->
+  <div class="bulkbar" data-bulkbar hidden>
+    <button type="button" class="bulk-clear" data-bulk-clear aria-label="선택 해제">
+      <span class="ms" style="font-size:19px" aria-hidden="true">close</span>
+    </button>
+    <a class="bulk-save" href="06-favorites-list.html">
+      <span class="ms ms-fill" style="font-size:19px" aria-hidden="true">favorite</span>
+      <span data-bulk-label>선택한 0곳 관심 장소에 담기</span>
+    </a>
+  </div>
+
+  <nav class="tabbar" aria-label="주요 메뉴">
+    <span class="tab is-on" aria-current="page"><span class="ms ms-fill" aria-hidden="true">explore</span>탐색</span>
+    <a class="tab" href="06-favorites-list.html"><span class="ms" aria-hidden="true">favorite</span>관심 장소함</a>
+  </nav>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

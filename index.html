@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>한적 — 화면 8종 (v4)</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* 목록 페이지 전용 — 화면 파일들과 토큰만 공유한다 */
+body{display:block;padding:0;align-items:initial}
+.sheet{max-width:1240px;margin:0 auto;padding:56px var(--s8) 80px}
+@media (max-width:720px){.sheet{padding:var(--s7) var(--s5) var(--s8)}}
+
+.head{max-width:62ch}
+.head h1{font:700 38px/1.16 var(--display);letter-spacing:-.025em;margin:var(--s4) 0 0}
+.head p{margin:var(--s4) 0 0}
+.head b{font-weight:600;color:var(--ink)}
+.head code{font:400 var(--f-label)/1 var(--mono);background:var(--card);padding:3px 7px;border-radius:6px;border:1px solid var(--line)}
+
+/* v3 → v4 무엇을 발전시켰나 */
+.delta{margin:var(--s8) 0 0;border-top:1px solid var(--line-2)}
+.delta-row{display:grid;grid-template-columns:170px 1fr 1fr;gap:var(--s5);padding:var(--s4) 0;border-bottom:1px solid var(--line)}
+.delta-row dt{font:600 var(--f-label)/1.5 var(--display);color:var(--ink)}
+.delta-row dd{margin:0;font:400 var(--f-label)/1.6 var(--sans);color:var(--body)}
+.delta-row .was{color:var(--faint)}
+.delta-row .was::before,.delta-row .now::before{font:400 var(--f-micro)/1 var(--mono);letter-spacing:.06em;margin-right:5px}
+.delta-row .was::before{content:"v3";color:var(--faint)}
+.delta-row .now::before{content:"v4";color:var(--terra-link)}
+@media (max-width:720px){.delta-row{grid-template-columns:1fr;gap:6px}}
+
+.keep{margin:var(--s6) 0 0;padding:var(--s5);background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg)}
+.keep h2{font:600 var(--f-caption)/1 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--calm-fg);margin-bottom:var(--s3)}
+.keep p{font:400 var(--f-label)/1.7 var(--sans);color:var(--body)}
+.swatches{display:flex;gap:6px;margin-top:var(--s4);flex-wrap:wrap}
+.sw{width:38px;height:38px;border-radius:10px;border:1px solid rgba(27,48,34,.08)}
+
+/* 화면 격자 */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:var(--s7) var(--s5);margin:var(--s8) 0 0}
+.cell{display:flex;flex-direction:column;gap:var(--s3)}
+.shot{position:relative;width:100%;aspect-ratio:430/880;overflow:hidden;background:var(--screen);
+  border-radius:var(--r-md);box-shadow:0 4px 18px rgba(27,48,34,.09);
+  transition:box-shadow .2s ease,transform .2s ease}
+.cell:hover .shot{box-shadow:0 16px 40px rgba(27,48,34,.18);transform:translateY(-3px)}
+.shot iframe{position:absolute;top:0;left:0;width:430px;height:880px;border:0;transform-origin:top left;pointer-events:none}
+.shot .veil{position:absolute;inset:0}
+
+.cap{display:flex;align-items:baseline;gap:var(--s2)}
+.cap .n{font:700 var(--f-micro)/1 var(--mono);color:var(--muted);flex:none}
+.cap .t{font:600 var(--f-body)/1.3 var(--display);color:var(--ink)}
+.cap .s{font:600 var(--f-micro)/1 var(--display);margin-left:auto;flex:none;padding:3px 7px;border-radius:var(--r-pill)}
+.cell .d{font:400 var(--f-caption)/1.65 var(--sans);color:var(--body)}
+.cell .f{font:400 var(--f-micro)/1 var(--mono);color:var(--faint)}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="head">
+    <p class="t-eyebrow">워킹 스켈레톤 · 화면 8종 · v4</p>
+    <h1>붐비는 주말은<br>피해서 떠나요</h1>
+    <p class="t-lead">v3의 디자인을 그대로 두고 약한 축만 발전시킨 시안입니다. 각 장면은 독립 HTML이고 버튼·목록·탭바가 실제 링크라서 <b>썸네일로 들어간 뒤 화면 안에서 흐름을 따라갈 수 있습니다.</b> 스타일은 <code>style.css</code> 한 파일을 공유합니다.</p>
+  </header>
+
+  <section class="keep">
+    <h2>v3에서 그대로 가져온 것</h2>
+    <p>팔레트, 서체, 430px 프레임, 0~100 혼잡 지수와 45/70 구간, 서울 관광지 데이터, 문구 — v3가 마음에 든다고 하신 것들이므로 브리프로 취급해 건드리지 않았습니다.</p>
+    <div class="swatches" aria-label="팔레트">
+      <span class="sw" style="background:#E7EDE7" title="#E7EDE7 바탕"></span>
+      <span class="sw" style="background:#F1F5F1" title="#F1F5F1 화면"></span>
+      <span class="sw" style="background:#1B3022" title="#1B3022 森 그린"></span>
+      <span class="sw" style="background:#45564A" title="#45564A 본문"></span>
+      <span class="sw" style="background:#D17A5D" title="#D17A5D 테라코타"></span>
+      <span class="sw" style="background:#DF6D41" title="#DF6D41 혼잡"></span>
+      <span class="sw" style="background:#E8B84B" title="#E8B84B 보통"></span>
+      <span class="sw" style="background:#AAA648" title="#AAA648 여유"></span>
+    </div>
+  </section>
+
+  <section>
+    <dl class="delta">
+      <div class="delta-row">
+        <dt>한글 서체</dt>
+        <dd class="was">Manrope·Hanken Grotesk만 지정 — 라틴 전용이라 한글이 기기 기본 폰트로 떨어짐. 보는 기기마다 다르게 보였습니다</dd>
+        <dd class="now">Pretendard를 붙여 한글도 지정. 라틴은 Manrope 유지</dd>
+      </div>
+      <div class="delta-row">
+        <dt>용량</dt>
+        <dd class="was">5.4MB — Material Symbols 가변폰트 3.96MB가 파일에 내장</dd>
+        <dd class="now">92KB. 아이콘을 Google Fonts CDN으로 옮김</dd>
+      </div>
+      <div class="delta-row">
+        <dt>편집</dt>
+        <dd class="was">자체 추출형 번들. 열면 보이지만 수정할 수 없음</dd>
+        <dd class="now">HTML·CSS 그대로. 화면당 파일 1개 + 공용 style.css</dd>
+      </div>
+      <div class="delta-row">
+        <dt>혼잡 지수</dt>
+        <dd class="was">숫자와 색만 보여줌 — 88이 왜 혼잡인지 화면에서 알 수 없었음</dd>
+        <dd class="now">게이지와 차트에 45·70 경계선 노출. 값의 의미가 눈으로 확인됨</dd>
+      </div>
+      <div class="delta-row">
+        <dt>상태 분리</dt>
+        <dd class="was">관심 장소함의 목록·훑기·빈 상태가 한 화면의 내부 상태</dd>
+        <dd class="now">세 상태를 독립 화면으로 분리해 각각 검토·공유 가능</dd>
+      </div>
+      <div class="delta-row">
+        <dt>접근성</dt>
+        <dd class="was">뒤로 버튼에 aria-label과 44px 타깃은 있었음. 포커스 표시·차트 대체 텍스트는 없음</dd>
+        <dd class="now">focus-visible, 게이지·차트·스파크에 aria-label, 탭에 aria-current</dd>
+      </div>
+      <div class="delta-row">
+        <dt>다건 담기</dt>
+        <dd class="was">한 곳씩 상세로 들어가 하트를 눌러야 담김</dd>
+        <dd class="now">검색 결과에서 체크박스로 여러 곳을 골라 한 번에 담기</dd>
+      </div>
+      <div class="delta-row">
+        <dt>이동수단</dt>
+        <dd class="was">이동시간 가중치 고정(0.8) — 도보든 차든 같은 기준</dd>
+        <dd class="now">도보 1.1 / 차 0.2 토글. 1순위 추천 기준이 바뀌고 근거를 문구로 밝힘</dd>
+      </div>
+      <div class="delta-row">
+        <dt>정리</dt>
+        <dd class="was">인라인 스타일에 값이 흩어져 있음</dd>
+        <dd class="now">타입 8단계 · 여백 4px 배수 · 컴포넌트 클래스로 정리</dd>
+      </div>
+    </dl>
+  </section>
+
+  <ul class="grid">
+
+    <li class="cell"><a class="cell" href="01-landing.html">
+      <div class="shot"><iframe src="01-landing.html" scrolling="no" tabindex="-1" title="랜딩"></iframe><span class="veil"></span></div>
+      <div class="cap"><span class="n">0</span><span class="t">랜딩</span></div>
+      <p class="d">이미지 위에 카피를 얹고, 이 앱이 하는 일 세 가지를 아래에 둡니다. 상단 크롬이 없는 유일한 화면.</p>
+      <span class="f">01-landing</span>
+    </a></li>
+
+    <li class="cell"><a class="cell" href="02-search.html">
+      <div class="shot"><iframe src="02-search.html" scrolling="no" tabindex="-1" title="탐색"></iframe><span class="veil"></span></div>
+      <div class="cap"><span class="n">1</span><span class="t">탐색 · 검색</span></div>
+      <p class="d">검색이 진입점이지만, 지금 서울 평균 61을 함께 보여줘 검색 전에도 오늘 상황이 가늠됩니다.</p>
+      <span class="f">02-search</span>
+    </a></li>
+
+    <li class="cell"><a class="cell" href="03-results.html">
+      <div class="shot"><iframe src="03-results.html" scrolling="no" tabindex="-1" title="검색 결과"></iframe><span class="veil"></span></div>
+      <div class="cap"><span class="n">2</span><span class="t">검색 결과</span></div>
+      <p class="d">혼잡도 낮은 순이 기본. 붐비는 곳을 알려주는 게 아니라 여유로운 곳을 찾아주는 도구라서.</p>
+      <span class="f">03-results</span>
+    </a></li>
+
+    <li class="cell"><a class="cell" href="04-detail.html">
+      <div class="shot"><iframe src="04-detail.html" scrolling="no" tabindex="-1" title="장소 상세"></iframe><span class="veil"></span></div>
+      <div class="cap"><span class="n">3</span><span class="t">장소 상세</span><span class="s tag-busy">88 혼잡</span></div>
+      <p class="d">시간대별 예측이 본문입니다. 45·70 경계선을 그려 88이 왜 혼잡인지 보이게 했습니다.</p>
+      <span class="f">04-detail</span>
+    </a></li>
+
+    <li class="cell"><a class="cell" href="05-alternatives.html">
+      <div class="shot"><iframe src="05-alternatives.html" scrolling="no" tabindex="-1" title="대안 비교"></iframe><span class="veil"></span></div>
+      <div class="cap"><span class="n">4</span><span class="t">대안 비교</span></div>
+      <p class="d">기준 장소를 위에 두고 3곳을 같은 항목으로. 순위를 왜 그렇게 매겼는지 태그로 밝힙니다.</p>
+      <span class="f">05-alternatives</span>
+    </a></li>
+
+    <li class="cell"><a class="cell" href="06-favorites-list.html">
+      <div class="shot"><iframe src="06-favorites-list.html" scrolling="no" tabindex="-1" title="관심 장소함 목록"></iframe><span class="veil"></span></div>
+      <div class="cap"><span class="n">5</span><span class="t">관심함 · 목록</span></div>
+      <p class="d">항목마다 하루 흐름을 작은 막대로 얹어, 목록만 훑어도 언제 가야 할지 가늠됩니다.</p>
+      <span class="f">06-favorites-list</span>
+    </a></li>
+
+    <li class="cell"><a class="cell" href="07-favorites-glance.html">
+      <div class="shot"><iframe src="07-favorites-glance.html" scrolling="no" tabindex="-1" title="관심 장소함 하나씩 훑기"></iframe><span class="veil"></span></div>
+      <div class="cap"><span class="n">5</span><span class="t">관심함 · 훑기</span></div>
+      <p class="d">같은 데이터를 한 장씩 크게. 지금 가도 되는지에 대한 판단을 한 문장으로 붙입니다.</p>
+      <span class="f">07-favorites-glance</span>
+    </a></li>
+
+    <li class="cell"><a class="cell" href="08-favorites-empty.html">
+      <div class="shot"><iframe src="08-favorites-empty.html" scrolling="no" tabindex="-1" title="관심 장소함 비어 있음"></iframe><span class="veil"></span></div>
+      <div class="cap"><span class="n">5</span><span class="t">관심함 · 비어 있음</span><span class="s tag-calm">신규</span></div>
+      <p class="d">빈 화면은 사과하지 않고 다음 동작을 줍니다. 지금 여유로운 곳을 바로 제안합니다.</p>
+      <span class="f">08-favorites-empty</span>
+    </a></li>
+
+  </ul>
+</div>
+
+<script>
+/* 썸네일: 실제 화면(430px)을 셀 너비에 맞춰 축소 */
+function fit(){
+  document.querySelectorAll(".shot").forEach(s => {
+    s.querySelector("iframe").style.transform = "scale(" + (s.clientWidth / 430) + ")";
+  });
+}
+addEventListener("resize", fit);
+addEventListener("load", fit);
+fit();
+</script>
+</body>
+</html>

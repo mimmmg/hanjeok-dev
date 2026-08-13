@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>탐색 — 한적</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══ 1 검색 진입 ══════════════════════════════════════════════
+     검색이 유일한 진입점. 다만 "지금 서울 평균"을 함께 보여줘
+     검색 전에도 오늘 상황을 가늠할 수 있게 한다.
+     검색·추천 칩 → 검색 결과 / 탭바 관심 장소함 → 관심함
+     ═════════════════════════════════════════════════════════════ -->
+<div class="device">
+
+  <header class="chrome">
+    <span style="width:var(--s2)"></span>
+    <h1 class="chrome-title">탐색</h1>
+    <span class="avatar" aria-label="지우">지우</span>
+  </header>
+
+  <div class="scroll pad" style="padding-top:var(--s6)">
+
+    <div class="zin">
+      <h2 class="t-title" style="font-size:26px;line-height:1.25">어디로 떠나고 싶으세요?</h2>
+      <p class="t-label" style="margin-top:var(--s2)">장소를 입력하면 지금 혼잡도부터 보여드려요.</p>
+    </div>
+
+    <form class="zin d1" style="margin-top:var(--s5);display:flex;flex-direction:column;gap:var(--s3)" role="search" onsubmit="return false">
+      <label class="search">
+        <span class="ms" style="font-size:22px;color:var(--muted)" aria-hidden="true">search</span>
+        <input type="search" value="경복궁" aria-label="관광지 이름 검색">
+      </label>
+      <a class="btn btn-terra" href="03-results.html">
+        혼잡도 보기
+        <span class="ms" style="font-size:20px" aria-hidden="true">arrow_forward</span>
+      </a>
+    </form>
+
+    <!-- 이번 주말 많이 찾는 곳 -->
+    <section class="zin d2" style="margin-top:var(--s7)">
+      <h3 class="t-eyebrow">이번 주말 많이 찾는 곳</h3>
+      <ul style="display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)">
+        <li><a class="suggest" href="03-results.html"><span class="dot fill-busy"></span>경복궁</a></li>
+        <li><a class="suggest" href="03-results.html"><span class="dot fill-mid"></span>창덕궁</a></li>
+        <li><a class="suggest" href="03-results.html"><span class="dot fill-calm"></span>덕수궁</a></li>
+        <li><a class="suggest" href="03-results.html"><span class="dot fill-calm"></span>북촌한옥마을</a></li>
+        <li><a class="suggest" href="03-results.html"><span class="dot fill-busy"></span>남산서울타워</a></li>
+      </ul>
+    </section>
+
+    <!-- 지금 서울 평균 -->
+    <section class="card zin d3" style="margin-top:var(--s6);margin-bottom:var(--s8)">
+      <div class="row-between">
+        <div class="row" style="gap:var(--s2)">
+          <span class="ms" style="font-size:20px;color:var(--muted)" aria-hidden="true">schedule</span>
+          <h3 class="t-label" style="color:var(--body)">지금 서울 관광지 평균</h3>
+        </div>
+        <span class="tag tag-mid">보통</span>
+      </div>
+
+      <div class="row" style="align-items:flex-end;gap:var(--s3);margin-top:var(--s4)">
+        <span class="idx fg-mid">61</span>
+        <span class="t-caption" style="padding-bottom:6px">토요일 오후 1시 기준</span>
+      </div>
+
+      <!-- v4 추가: 45/70 경계선을 그려 61이 왜 '보통'인지 보이게 -->
+      <div class="gauge" style="margin-top:var(--s4)" role="img" aria-label="혼잡 지수 61, 100점 만점. 45 이상은 보통, 70 이상은 혼잡">
+        <div class="gauge-fill fill-mid" style="width:61%"></div>
+        <span class="gauge-tick at45" aria-hidden="true"></span>
+        <span class="gauge-tick at70" aria-hidden="true"></span>
+      </div>
+      <div class="gauge-scale" aria-hidden="true">
+        <span>0 여유</span><span>45 보통</span><span>70 혼잡</span><span>100</span>
+      </div>
+
+      <p class="t-label" style="margin-top:var(--s4);padding-top:var(--s3);border-top:1px solid var(--line)">
+        오후 4시 이후로 완만해질 전망이에요. 늦은 오후 출발을 고려해 보세요.
+      </p>
+    </section>
+
+  </div>
+
+  <nav class="tabbar" aria-label="주요 메뉴">
+    <span class="tab is-on" aria-current="page"><span class="ms ms-fill" aria-hidden="true">explore</span>탐색</span>
+    <a class="tab" href="06-favorites-list.html"><span class="ms" aria-hidden="true">favorite</span>관심 장소함</a>
+  </nav>
+
+</div>
+</body>
+</html>

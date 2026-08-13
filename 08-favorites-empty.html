@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>관심 장소함 · 비어 있음 — 한적</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══ 5 관심 장소함 · 비어 있음 ════════════════════════════════
+     빈 화면은 사과하지 않고 다음 동작을 준다. 어디서 담는지
+     알려주고, 지금 담을 만한 여유로운 곳을 바로 제안한다.
+     v3에는 상태로만 있었고 v1·v2에는 아예 없던 화면이다.
+     ═════════════════════════════════════════════════════════════ -->
+<div class="device">
+
+  <header class="chrome">
+    <span style="width:var(--s2)"></span>
+    <h1 class="chrome-title">관심 장소함</h1>
+    <span class="avatar" aria-label="지우">지우</span>
+  </header>
+
+  <div class="scroll pad" style="padding-top:var(--s5)">
+
+    <div class="empty zin" style="padding-top:var(--s8)">
+      <span class="empty-ico" aria-hidden="true"><span class="ms" style="font-size:30px">favorite_border</span></span>
+      <h2 class="t-title" style="margin-top:var(--s2)">담아둔 장소가 없어요</h2>
+      <p class="t-label" style="max-width:30ch">장소 상세에서 하트를 누르면 이곳에 모입니다. 담아둔 곳은 혼잡도 낮은 순으로 정렬돼요.</p>
+    </div>
+
+    <!-- 빈 화면은 초대다 — 지금 담을 만한 곳을 바로 제안 -->
+    <section class="zin d1" style="margin-top:var(--s6)">
+      <h3 class="t-eyebrow" style="margin-bottom:var(--s3)">지금 여유로운 곳</h3>
+      <ul style="display:flex;flex-direction:column;gap:var(--s3)">
+
+        <li>
+          <a class="card" href="04-detail.html">
+            <div class="row-between">
+              <div style="flex:1;min-width:0">
+                <h4 class="t-name">경희궁</h4>
+                <p class="t-caption" style="margin-top:4px">역사 유적지 · 도보 8분 · 무료</p>
+              </div>
+              <div style="text-align:right">
+                <span class="idx-sm fg-calm">18</span>
+                <span class="t-caption fg-calm" style="display:block;margin-top:3px;font-weight:600">여유</span>
+              </div>
+            </div>
+            <div class="gauge" style="margin-top:var(--s3)" role="img" aria-label="혼잡 지수 18, 여유">
+              <div class="gauge-fill fill-calm" style="width:18%"></div>
+              <span class="gauge-tick at45" aria-hidden="true"></span><span class="gauge-tick at70" aria-hidden="true"></span>
+            </div>
+          </a>
+        </li>
+
+        <li>
+          <a class="card" href="04-detail.html">
+            <div class="row-between">
+              <div style="flex:1;min-width:0">
+                <h4 class="t-name">서울숲 성수</h4>
+                <p class="t-caption" style="margin-top:4px">공원 · 카페 · 지하철 22분 · 무료</p>
+              </div>
+              <div style="text-align:right">
+                <span class="idx-sm fg-calm">20</span>
+                <span class="t-caption fg-calm" style="display:block;margin-top:3px;font-weight:600">여유</span>
+              </div>
+            </div>
+            <div class="gauge" style="margin-top:var(--s3)" role="img" aria-label="혼잡 지수 20, 여유">
+              <div class="gauge-fill fill-calm" style="width:20%"></div>
+              <span class="gauge-tick at45" aria-hidden="true"></span><span class="gauge-tick at70" aria-hidden="true"></span>
+            </div>
+          </a>
+        </li>
+
+      </ul>
+
+      <a class="btn btn-terra" style="margin:var(--s5) 0 var(--s8)" href="02-search.html">
+        <span class="ms" style="font-size:20px" aria-hidden="true">search</span>직접 검색하기
+      </a>
+    </section>
+
+  </div>
+
+  <nav class="tabbar" aria-label="주요 메뉴">
+    <a class="tab" href="02-search.html"><span class="ms" aria-hidden="true">explore</span>탐색</a>
+    <span class="tab is-on" aria-current="page"><span class="ms ms-fill" aria-hidden="true">favorite</span>관심 장소함</span>
+  </nav>
+
+</div>
+</body>
+</html>

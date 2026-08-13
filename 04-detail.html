@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>경복궁 — 한적</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══ 3 장소 상세 ══════════════════════════════════════════════
+     혼잡 지수 88 — 기준(70) 이상이므로 [여유로운 대안 보기]가
+     함께 올라온다. 시간대별 예측이 이 화면의 본문이고,
+     가장 여유로운 시각을 따로 짚어준다.
+     대안 보기 → 대안 비교 / 담기 → 관심 장소함
+     ═════════════════════════════════════════════════════════════ -->
+<div class="device">
+
+  <header class="chrome">
+    <a class="icon-btn" href="03-results.html" aria-label="뒤로"><span class="ms" aria-hidden="true">arrow_back</span></a>
+    <h1 class="chrome-title">장소 상세</h1>
+    <span class="avatar" aria-label="지우">지우</span>
+  </header>
+
+  <div class="scroll">
+
+    <figure class="slot zin" style="height:220px">
+      <figcaption class="t-slot slot-tag">[ 이미지 자리 · 경복궁 ]</figcaption>
+
+      <!-- 이동수단 — 대안 추천의 이동시간 가중치를 바꾼다 -->
+      <div class="travel" style="position:absolute;right:var(--s4);bottom:var(--s4)" role="group" aria-label="이동수단">
+        <button type="button" class="travel-opt" data-travel="walk" aria-pressed="true">
+          <span class="ms" aria-hidden="true">directions_walk</span>도보
+        </button>
+        <button type="button" class="travel-opt" data-travel="car" aria-pressed="false">
+          <span class="ms" aria-hidden="true">directions_car</span>차
+        </button>
+      </div>
+    </figure>
+
+    <div class="pad" style="padding-top:var(--s5)">
+
+      <header class="zin">
+        <p class="t-eyebrow">역사 유적지</p>
+        <h2 class="t-title" style="font-size:26px;margin-top:var(--s2)">경복궁</h2>
+        <div class="row" style="gap:5px;margin-top:var(--s2)">
+          <span class="ms" style="font-size:17px;color:var(--muted)" aria-hidden="true">location_on</span>
+          <span class="t-label">서울 종로구 사직로 161</span>
+        </div>
+      </header>
+
+      <!-- 현재 혼잡 지수 -->
+      <section class="card zin d1" style="margin-top:var(--s5);background:var(--busy-tint);border-color:rgba(223,109,65,.28)">
+        <div class="row-between">
+          <h3 class="t-label" style="color:var(--body)">현재 혼잡 지수</h3>
+          <span class="row" style="gap:5px">
+            <span class="dot fill-busy"></span>
+            <span class="t-caption" style="color:var(--busy-fg);font-weight:600">실시간</span>
+          </span>
+        </div>
+
+        <div class="row" style="align-items:flex-end;gap:var(--s3);margin-top:var(--s3)">
+          <span class="idx fg-busy">88</span>
+          <span class="tag tag-busy" style="margin-bottom:6px">혼잡</span>
+        </div>
+
+        <!-- v4 추가: 경계선으로 88이 왜 '혼잡'인지 보이게 -->
+        <div class="gauge" style="margin-top:var(--s4);background:rgba(255,255,255,.7)" role="img" aria-label="혼잡 지수 88, 100점 만점. 70 이상이 혼잡">
+          <div class="gauge-fill fill-busy" style="width:88%"></div>
+          <span class="gauge-tick at45" aria-hidden="true"></span>
+          <span class="gauge-tick at70" aria-hidden="true"></span>
+        </div>
+        <div class="gauge-scale" aria-hidden="true">
+          <span>0 여유</span><span>45 보통</span><span>70 혼잡</span><span>100</span>
+        </div>
+      </section>
+
+      <!-- 시간대별 예측 -->
+      <section class="zin d2" style="margin-top:var(--s6)">
+        <h3 class="t-eyebrow" style="margin-bottom:var(--s4)">시간대별 예측</h3>
+
+        <div class="hours" role="img" aria-label="10시부터 19시까지 혼잡 지수 예측. 10시 46, 11시 62, 12시 78, 13시 88 현재, 14시 92, 15시 84, 16시 68, 17시 52, 18시 38, 19시 28">
+          <span class="hours-band" style="bottom:70%" aria-hidden="true"><span>70</span></span>
+          <span class="hours-band" style="bottom:45%" aria-hidden="true"><span>45</span></span>
+          <span class="hour"><span class="hour-bar fill-mid"  style="--h:42px;height:42px;opacity:.6"></span><span class="hour-t">10</span></span>
+          <span class="hour"><span class="hour-bar fill-mid"  style="--h:57px;height:57px;opacity:.6"></span><span class="hour-t">11</span></span>
+          <span class="hour"><span class="hour-bar fill-busy" style="--h:72px;height:72px;opacity:.45"></span><span class="hour-t">12</span></span>
+          <span class="hour is-now"><span class="hour-bar fill-busy" style="--h:81px;height:81px"></span><span class="hour-t">13</span></span>
+          <span class="hour"><span class="hour-bar fill-busy" style="--h:85px;height:85px;opacity:.45"></span><span class="hour-t">14</span></span>
+          <span class="hour"><span class="hour-bar fill-busy" style="--h:77px;height:77px;opacity:.45"></span><span class="hour-t">15</span></span>
+          <span class="hour"><span class="hour-bar fill-mid"  style="--h:63px;height:63px;opacity:.6"></span><span class="hour-t">16</span></span>
+          <span class="hour"><span class="hour-bar fill-mid"  style="--h:48px;height:48px;opacity:.6"></span><span class="hour-t">17</span></span>
+          <span class="hour"><span class="hour-bar fill-calm" style="--h:35px;height:35px;opacity:.45"></span><span class="hour-t">18</span></span>
+          <span class="hour"><span class="hour-bar fill-calm" style="--h:26px;height:26px;opacity:.45"></span><span class="hour-t">19</span></span>
+        </div>
+
+        <p class="t-label" style="margin-top:var(--s4);padding-top:var(--s3);border-top:1px solid var(--line)">
+          <strong style="color:var(--calm-fg);font-weight:700">19시 이후</strong>가 가장 여유로울 전망이에요.
+        </p>
+      </section>
+
+      <!-- 현장 조건 -->
+      <dl class="zin d3" style="margin-top:var(--s6);display:flex;flex-direction:column;gap:var(--s1)">
+        <div class="row" style="gap:var(--s3);padding:var(--s3) 0;border-top:1px solid var(--line)">
+          <span class="ms" style="font-size:20px;color:var(--muted)" aria-hidden="true">near_me</span>
+          <dt class="t-label" style="flex:none;width:88px">내 위치에서</dt>
+          <dd class="t-body" style="color:var(--ink);font-weight:500;font-size:var(--f-ui)">2.1km · 지하철 12분</dd>
+        </div>
+        <div class="row" style="gap:var(--s3);padding:var(--s3) 0;border-top:1px solid var(--line)">
+          <span class="ms" style="font-size:20px;color:var(--muted)" aria-hidden="true">wb_sunny</span>
+          <dt class="t-label" style="flex:none;width:88px">날씨</dt>
+          <dd class="t-body" style="color:var(--ink);font-weight:500;font-size:var(--f-ui)">맑음 29°</dd>
+        </div>
+        <div class="row" style="gap:var(--s3);padding:var(--s3) 0;border-top:1px solid var(--line)">
+          <span class="ms" style="font-size:20px;color:var(--muted)" aria-hidden="true">accessible</span>
+          <dt class="t-label" style="flex:none;width:88px">접근성</dt>
+          <dd class="t-body" style="color:var(--ink);font-weight:500;font-size:var(--f-ui)">3호선 도보 3분</dd>
+        </div>
+        <div class="row" style="gap:var(--s3);padding:var(--s3) 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+          <span class="ms" style="font-size:20px;color:var(--muted)" aria-hidden="true">confirmation_number</span>
+          <dt class="t-label" style="flex:none;width:88px">입장료</dt>
+          <dd class="t-body" style="color:var(--ink);font-weight:500;font-size:var(--f-ui)">3,000원</dd>
+        </div>
+      </dl>
+
+      <!-- 동작 -->
+      <div style="display:flex;flex-direction:column;gap:var(--s3);margin:var(--s6) 0 var(--s8)">
+        <a class="btn btn-terra" href="05-alternatives.html">
+          <span class="ms" style="font-size:20px" aria-hidden="true">compare_arrows</span>여유로운 대안 보기
+        </a>
+        <div class="row" style="gap:var(--s3)">
+          <a class="btn btn-line btn-sm" style="flex:1" href="https://map.kakao.com/?q=%EA%B2%BD%EB%B3%B5%EA%B6%81" target="_blank" rel="noopener">
+            <span class="ms" style="font-size:19px" aria-hidden="true">directions</span>지도로 길찾기
+          </a>
+          <a class="btn btn-line btn-sm" style="flex:1" href="06-favorites-list.html">
+            <span class="ms" style="font-size:19px" aria-hidden="true">favorite_border</span>관심 장소에 담기
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

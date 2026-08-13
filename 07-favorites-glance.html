@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>관심 장소함 · 하나씩 훑기 — 한적</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══ 5 관심 장소함 · 하나씩 훑기 ══════════════════════════════
+     목록과 같은 데이터를 한 장씩 크게 본다. 결정을 미루지 않게
+     현재 상황에 대한 판단을 한 문장으로 붙인다.
+     [목록] → 06 / [상세 보기] → 장소 상세
+     ═════════════════════════════════════════════════════════════ -->
+<div class="device">
+
+  <header class="chrome">
+    <span style="width:var(--s2)"></span>
+    <h1 class="chrome-title">관심 장소함</h1>
+    <span class="avatar" aria-label="지우">지우</span>
+  </header>
+
+  <div class="scroll pad" style="padding-top:var(--s5)">
+
+    <div class="segbar zin" role="tablist" aria-label="보기 방식">
+      <a class="seg" href="06-favorites-list.html" role="tab" aria-selected="false">
+        <span class="ms" style="font-size:18px" aria-hidden="true">list</span>목록
+      </a>
+      <span class="seg is-on" role="tab" aria-selected="true">
+        <span class="ms" style="font-size:18px" aria-hidden="true">style</span>하나씩 훑기
+      </span>
+    </div>
+
+    <p class="t-label zin d1" style="margin:var(--s4) 0 var(--s3);text-align:center;font-variant-numeric:tabular-nums">1 / 2</p>
+
+    <!-- 한 장 크게 -->
+    <article class="card zin d1" style="padding:0;overflow:hidden">
+      <figure class="slot" style="height:168px">
+        <figcaption class="t-slot slot-tag" style="left:var(--s4)">[ 이미지 자리 · 남산서울타워 ]</figcaption>
+      </figure>
+
+      <div style="padding:var(--s5)">
+        <p class="t-eyebrow">전망 · 랜드마크</p>
+        <h2 class="t-title" style="margin-top:var(--s2)">남산서울타워</h2>
+
+        <div class="row" style="align-items:flex-end;gap:var(--s3);margin-top:var(--s4)">
+          <span class="idx fg-busy">76</span>
+          <span class="tag tag-busy" style="margin-bottom:6px">혼잡</span>
+        </div>
+
+        <div class="gauge" style="margin-top:var(--s4)" role="img" aria-label="혼잡 지수 76, 100점 만점. 70 이상이 혼잡">
+          <div class="gauge-fill fill-busy" style="width:76%"></div>
+          <span class="gauge-tick at45" aria-hidden="true"></span>
+          <span class="gauge-tick at70" aria-hidden="true"></span>
+        </div>
+        <div class="gauge-scale" aria-hidden="true">
+          <span>0 여유</span><span>45 보통</span><span>70 혼잡</span><span>100</span>
+        </div>
+
+        <p class="t-body" style="margin-top:var(--s4);padding-top:var(--s4);border-top:1px solid var(--line)">
+          지금은 붐빕니다. 버스 24분 거리의 대안을 함께 보는 편이 좋아요.
+        </p>
+
+        <div class="row" style="gap:var(--s3);margin-top:var(--s5)">
+          <a class="btn btn-line btn-sm" style="flex:1" href="04-detail.html">상세 보기</a>
+          <a class="btn btn-terra btn-sm" style="flex:1" href="05-alternatives.html">대안 보기</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- 넘기기 -->
+    <nav class="row" style="gap:var(--s3);margin-top:var(--s4)" aria-label="담아둔 장소 넘겨보기">
+      <button type="button" class="btn btn-line btn-sm" style="flex:1" aria-label="이전 장소">
+        <span class="ms" style="font-size:19px" aria-hidden="true">chevron_left</span>이전
+      </button>
+      <button type="button" class="btn btn-line btn-sm" style="flex:1" aria-label="다음 장소">
+        다음<span class="ms" style="font-size:19px" aria-hidden="true">chevron_right</span>
+      </button>
+    </nav>
+
+    <p class="t-caption zin d3" style="margin:var(--s4) 0 var(--s8);text-align:center">
+      담아둔 곳을 하나씩 넘겨보며 어디부터 갈지 정하세요.
+    </p>
+
+  </div>
+
+  <!-- 담기 확인 -->
+  <div class="toast" role="status">
+    <span class="ms ms-fill" aria-hidden="true">check_circle</span>
+    <span>경복궁을(를) 관심 장소함에 담았어요</span>
+  </div>
+
+  <nav class="tabbar" aria-label="주요 메뉴">
+    <a class="tab" href="02-search.html"><span class="ms" aria-hidden="true">explore</span>탐색</a>
+    <span class="tab is-on" aria-current="page"><span class="ms ms-fill" aria-hidden="true">favorite</span>관심 장소함</span>
+  </nav>
+
+</div>
+</body>
+</html>
