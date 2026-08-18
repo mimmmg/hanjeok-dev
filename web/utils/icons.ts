@@ -13,11 +13,18 @@
  * 이름은 https://fonts.google.com/icons 에서 확인한다.
  */
 export const ICON_NAMES = [
+  'arrow_back',
+  'arrow_forward',
+  'check',
   'check_circle',
+  'close',
   'error',
+  'favorite',
   'fingerprint',
   'info',
   'progress_activity',
+  'search',
+  'travel_explore',
 ] as const
 
 export type IconName = (typeof ICON_NAMES)[number]

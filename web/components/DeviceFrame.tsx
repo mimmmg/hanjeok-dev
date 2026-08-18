@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { Icon } from '@/components/Icon'
 
 /**
  * 430 × 880 모바일 앱 화면 프레임. prototype/style.css 의 .device 를 옮긴 것.
@@ -9,9 +11,12 @@ import type { ReactNode } from 'react'
  */
 export function DeviceFrame({
   title,
+  backHref,
   children,
 }: {
   title?: string
+  /** 넘기면 상단에 뒤로가기 버튼이 생긴다 */
+  backHref?: string
   children: ReactNode
 }) {
   return (
@@ -32,6 +37,17 @@ export function DeviceFrame({
               items-center gap-2 border-b pr-3 pl-2 backdrop-blur-[14px]
             "
           >
+            {backHref ? (
+              <Link
+                href={backHref}
+                aria-label="뒤로"
+                className="text-ink flex size-tap flex-none items-center justify-center rounded-full transition-colors hover:bg-[rgb(27_48_34_/_0.05)]"
+              >
+                <Icon name="arrow_back" size={22} />
+              </Link>
+            ) : (
+              <span className="w-2 flex-none" />
+            )}
             <h1 className="font-display flex-1 pl-2 text-title font-bold tracking-[-0.01em]">
               {title}
             </h1>
