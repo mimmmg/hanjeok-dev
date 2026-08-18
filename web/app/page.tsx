@@ -1,13 +1,60 @@
+import type { ReactNode } from 'react'
 import { AnonAuthProbe } from '@/components/AnonAuthProbe'
+import { CongestionGauge } from '@/components/CongestionGauge'
+import { CongestionTag } from '@/components/CongestionTag'
+import { DeviceFrame } from '@/components/DeviceFrame'
+import { HoursChart } from '@/components/HoursChart'
+import { Icon } from '@/components/Icon'
 import { fetchForecast } from '@/utils/predictor'
 import { createClient } from '@/utils/supabase/server'
 
 /**
  * [임시] 워킹 스켈레톤 진단 화면.
  *
- * 브라우저 → Next.js 서버 → Supabase / FastAPI 두 경로가 모두 뚫렸는지 확인한다.
+ * 브라우저 → Next.js 서버 → Supabase / FastAPI 두 경로가 뚫렸는지 확인한다.
  * 실제 검색 화면을 만들 때 이 파일은 통째로 대체된다.
+ *
+ * 디자인은 prototype/ 의 시스템을 그대로 쓴다. 진단 화면이라도 토큰과
+ * 컴포넌트를 실제로 태워봐야 이식이 제대로 됐는지 알 수 있다.
  */
+
+/** [임시] 진단 항목 카드. 이 페이지와 함께 삭제된다. */
+function StatusCard({
+  step,
+  title,
+  ok,
+  children,
+}: {
+  step: string
+  title: string
+  ok: boolean
+  children: ReactNode
+}) {
+  return (
+    <section className="bg-card border-line rounded-lg border p-4">
+      <div className="mb-3 flex items-start gap-3">
+        <span
+          className={`font-display mt-px flex size-[22px] flex-none items-center justify-center rounded-full text-caption font-bold ${
+            ok ? 'bg-calm text-white' : 'bg-busy-tint text-busy-fg'
+          }`}
+        >
+          {step}
+        </span>
+        <h2 className="font-display text-lead flex-1 leading-tight font-semibold tracking-[-0.01em]">
+          {title}
+        </h2>
+        <Icon
+          name={ok ? 'check_circle' : 'error'}
+          size={20}
+          filled
+          className={ok ? 'text-calm' : 'text-busy'}
+        />
+      </div>
+      {children}
+    </section>
+  )
+}
+
 export default async function Home() {
   const supabase = await createClient()
 
@@ -23,65 +70,105 @@ export default async function Home() {
   )
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-4 p-6">
-      <h1 className="text-xl font-bold">뼈대 진단</h1>
-
-      <div className="rounded-lg border border-black/10 p-4">
-        <h2 className="mb-2 text-sm font-semibold">① Supabase 연결 (서버)</h2>
-        {error ? (
-          <p className="text-sm text-red-600">❌ {error.message}</p>
-        ) : (
-          <p className="text-sm">
-            ✅ place 테이블 조회 성공 — 현재 {count ?? 0}건
-            <br />
-            <span className="text-xs opacity-70">
-              0건이 정상이다. KTO 시드는 아직 넣지 않았다.
-            </span>
+    <DeviceFrame title="한적">
+      <div className="flex flex-col gap-4 px-6 pt-6 pb-10">
+        <header className="zin">
+          <p className="font-display text-muted text-caption font-semibold tracking-[0.08em] uppercase">
+            Working skeleton
           </p>
-        )}
-      </div>
+          <h2 className="font-display mt-4 text-hero leading-[1.18] font-bold tracking-[-0.02em]">
+            뼈대 진단
+          </h2>
+          <p className="text-body mt-3 text-lead leading-relaxed">
+            브라우저에서 시작해 Supabase와 예측 서비스까지 이어지는 경로가 실제로
+            뚫렸는지 확인합니다.
+          </p>
+        </header>
 
-      <div className="rounded-lg border border-black/10 p-4">
-        <h2 className="mb-2 text-sm font-semibold">② FastAPI 예측 서비스 (서버 경유)</h2>
-        {forecast && peak ? (
-          <>
-            <p className="text-sm">
-              ✅ 예측치 {forecast.slots.length}개 시간대 수신
-              <br />
-              가장 붐비는 시간: <strong>{peak.hour_slot}시 · {peak.congestion_pct}%</strong>
-            </p>
-            <div className="mt-3 flex h-16 items-end gap-[2px]" aria-hidden>
-              {forecast.slots.map((s) => (
-                <div
-                  key={s.hour_slot}
-                  className="flex-1 rounded-t bg-black/70"
-                  style={{ height: `${s.congestion_pct}%` }}
-                />
-              ))}
-            </div>
-            {forecast.is_mock && (
-              <p className="mt-2 text-xs opacity-70">
-                ⚠️ 더미 데이터다. 실제 KTO 데이터로 교체해야 한다.
-              </p>
+        <div className="zin [animation-delay:0.06s]">
+          <StatusCard step="1" title="Supabase 연결" ok={!error}>
+            {error ? (
+              <p className="text-busy-fg text-ui">{error.message}</p>
+            ) : (
+              <>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-display tabular text-hero leading-none font-extrabold tracking-[-0.03em]">
+                    {count ?? 0}
+                  </span>
+                  <span className="text-muted text-label">건 조회됨</span>
+                </div>
+                <p className="text-faint mt-3 text-caption leading-relaxed">
+                  0건이 정상입니다. KTO 시드를 아직 넣지 않았습니다. 조회가
+                  됐다는 것만으로 RLS의 &ldquo;누구나 읽기&rdquo; 정책이 의도대로
+                  동작함이 확인됩니다.
+                </p>
+              </>
             )}
-          </>
-        ) : (
-          <p className="text-sm text-red-600">
-            ❌ 예측 서비스 응답 없음
-            <br />
-            <span className="text-xs opacity-70">
-              predictor가 떠 있는지 확인: cd predictor && ./.venv/bin/uvicorn app.main:app --port 8000
-              <br />
-              이 상태에서도 위 ①과 익명 인증은 정상 동작해야 한다 (PRD ⑦ 가용성 요구).
-            </span>
-          </p>
-        )}
-      </div>
+          </StatusCard>
+        </div>
 
-      <div className="rounded-lg border border-black/10 p-4">
-        <h2 className="mb-2 text-sm font-semibold">③ 익명 인증 (브라우저)</h2>
-        <AnonAuthProbe />
+        <div className="zin [animation-delay:0.12s]">
+          <StatusCard
+            step="2"
+            title="혼잡 예측 서비스"
+            ok={Boolean(forecast && peak)}
+          >
+            {forecast && peak ? (
+              <>
+                <div className="mb-4 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-muted text-label">가장 붐비는 시간</p>
+                    <p className="font-display mt-1 flex items-baseline gap-1.5">
+                      <span className="tabular text-hero leading-none font-extrabold tracking-[-0.03em]">
+                        {peak.hour_slot}
+                      </span>
+                      <span className="text-body text-lead font-semibold">
+                        시
+                      </span>
+                    </p>
+                  </div>
+                  <CongestionTag pct={peak.congestion_pct} />
+                </div>
+
+                <CongestionGauge pct={peak.congestion_pct} />
+
+                <p className="text-muted mt-6 mb-2 text-label">
+                  시간대별 예측 · {forecast.slots.length}구간
+                </p>
+                <HoursChart slots={forecast.slots} nowHour={peak.hour_slot} />
+
+                {forecast.is_mock && (
+                  <p className="bg-terra-tint border-terra-bd text-terra-dark mt-4 flex items-start gap-2 rounded-xs border p-3 text-caption leading-relaxed">
+                    <Icon name="info" size={16} className="mt-px" />
+                    <span>
+                      더미 곡선입니다. KTO 공공데이터로 교체해야 실제 예측이
+                      됩니다.
+                    </span>
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-busy-fg text-ui leading-relaxed">
+                  예측 서비스 응답이 없습니다.
+                </p>
+                <p className="text-faint mt-2 text-caption leading-relaxed">
+                  <code className="bg-sunk text-body rounded-[6px] px-1.5 py-0.5 font-mono text-micro">
+                    cd predictor && ./.venv/bin/uvicorn app.main:app --port 8000
+                  </code>
+                  <br />
+                  이 상태에서도 ①과 ③은 정상 동작해야 합니다. 예측 서비스가
+                  죽어도 검색·즐겨찾기는 멈추지 않는다는 요구사항입니다.
+                </p>
+              </>
+            )}
+          </StatusCard>
+        </div>
+
+        <div className="zin [animation-delay:0.18s]">
+          <AnonAuthProbe />
+        </div>
       </div>
-    </main>
+    </DeviceFrame>
   )
 }
