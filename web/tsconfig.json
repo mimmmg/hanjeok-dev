@@ -10,6 +10,10 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
+    // scripts/ 는 Node 가 TypeScript 를 그대로 실행한다(빌드 단계 없음).
+    // Node 는 import 에 .ts 확장자를 요구하는데 TS 는 기본적으로 이를 막는다.
+    // noEmit 이므로 켜도 산출물에 영향이 없다.
+    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
