@@ -122,7 +122,7 @@ export function PlaceDetailActions({
 
         {showAlternatives && (
           <Link
-            href={`/alternatives?from=${placeId}&mode=${mode}`}
+            href={`/place/${placeId}/alternatives?mode=${mode}`}
             className="font-display text-ink flex min-h-14 items-center justify-center gap-2 rounded-full border border-[rgb(27_48_34_/_0.14)] px-5 text-base font-bold transition-colors hover:bg-[rgb(27_48_34_/_0.04)]"
           >
             <Icon name="compare_arrows" size={20} />

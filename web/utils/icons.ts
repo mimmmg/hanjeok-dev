@@ -28,6 +28,8 @@ export const ICON_NAMES = [
   'progress_activity',
   'search',
   'travel_explore',
+  'trending_down',
+  'wb_sunny',
 ] as const
 
 export type IconName = (typeof ICON_NAMES)[number]
