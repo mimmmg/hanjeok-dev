@@ -1,0 +1,6 @@
+{
+  // 파이썬 코드는 predictor/ 에만 있고, 의존성은 그 안의 .venv에 설치돼 있다.
+  // 이걸 지정하지 않으면 VS Code가 시스템 파이썬을 보고 "fastapi를 찾을 수 없음"이라고 표시한다.
+  "python.defaultInterpreterPath": "${workspaceFolder}/predictor/.venv/bin/python",
+  "python.analysis.extraPaths": ["${workspaceFolder}/predictor"]
+}
