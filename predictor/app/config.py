@@ -8,9 +8,16 @@ Next.js 는 마지막 저장분을 계속 읽으면 되지만(PRD ⑦ 가용성)
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 from zoneinfo import ZoneInfo
+
+# httpx 는 요청 URL 을 통째로 INFO 로 남긴다. 우리 요청은 serviceKey 가
+# 쿼리스트링에 들어가므로 그대로 두면 인증키가 로그 파일에 쌓인다.
+# 배포 플랫폼 로그는 여러 사람이 보고 오래 남으므로 여기서 막는다.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 # 서비스 지역이 서울 한정이므로 시간대도 서울로 고정한다.
 # 배포 서버는 UTC 로 돌기 때문에 이 기준이 없으면 hour_slot 이 9시간 밀린다.

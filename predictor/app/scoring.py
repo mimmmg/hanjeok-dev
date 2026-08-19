@@ -115,6 +115,62 @@ class HourForecast:
     congestion_pct: int
 
 
+# 날씨 보정의 최대 폭. 집중률이 이미 KTO 의 종합 예측이라, 날씨로 그 값을
+# 크게 흔들면 원본 예측을 덮어쓰는 셈이 된다. ±15% 로 제한한다.
+WEATHER_ADJUST_RANGE = 0.15
+
+
+def score_from_concentration(
+    *,
+    concentration_rate: float,
+    profile: str,
+    hourly_weather: list[HourWeather],
+) -> tuple[list[HourForecast], ScoreDetail]:
+    """
+    KTO 집중률을 기준으로 시간대별 혼잡도를 만든다.
+
+        congestion_pct(시각) = 집중률 × 날씨보정 × 시간대분포(시각)
+
+    집중률(cnctrRate)은 KTO 가 그 관광지의 향후 30일치를 직접 예측한 값이다.
+    장소 인기도·요일·계절이 이미 다 반영돼 있어서(토요일에 98 이 나온다),
+    우리가 그걸 다시 계산하면 이중 반영이 된다. 접근성도 마찬가지라 뺐다.
+
+    우리가 더하는 것은 두 가지뿐이고, 둘 다 KTO 가 주지 않는 정보다:
+    - 날씨 보정: 30일 앞 예측이 당일 비를 알 리 없다
+    - 시간대 분포: 집중률은 일 단위다. "몇 시에 가면 여유로운가"는 없다
+
+    이 구분이 서비스의 고유 가치가 어디에 있는지를 그대로 보여준다.
+    """
+    weather_by_hour = {w.hour_slot: w for w in hourly_weather}
+    daytime = [weather_by_hour[h] for h in range(9, 21) if h in weather_by_hour]
+    weather_avg = (
+        sum(weather_score(w, profile) for w in daytime) / len(daytime)
+        if daytime
+        else 50.0
+    )
+
+    # 50점을 중립으로 보고 ±15% 범위에서만 움직인다
+    weather_multiplier = 1.0 + ((weather_avg - 50.0) / 50.0) * WEATHER_ADJUST_RANGE
+    daily_level = _clamp(concentration_rate * weather_multiplier)
+
+    curve = HOUR_PROFILES.get(profile, HOUR_PROFILES["indoor"])
+    forecasts = [
+        HourForecast(
+            hour_slot=hour,
+            congestion_pct=int(round(_clamp(daily_level * ratio))),
+        )
+        for hour, ratio in enumerate(curve)
+    ]
+
+    return forecasts, ScoreDetail(
+        crowd=round(concentration_rate, 1),
+        access=0.0,  # 집중률에 이미 반영돼 있어 따로 더하지 않는다
+        weather=round(weather_avg, 1),
+        day_factor=round(weather_multiplier, 3),
+        peak_level=round(daily_level, 1),
+    )
+
+
 @dataclass(frozen=True)
 class ScoreDetail:
     """디버깅·설명용. 왜 이 숫자가 나왔는지 되짚을 수 있게 남긴다."""

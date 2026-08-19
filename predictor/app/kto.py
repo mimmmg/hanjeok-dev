@@ -30,6 +30,27 @@ from app.config import (
 logger = logging.getLogger(__name__)
 
 TOUR_API_BASE = "https://apis.data.go.kr/B551011/KorService2"
+# 관광지 집중률 방문자 추이 예측 정보 — 관광지별 향후 30일 집중률을 준다.
+# 우리가 요일·계절 규칙으로 흉내 내던 것을 KTO 가 직접 예측해 주는 자료다.
+CNCTR_API_BASE = "http://apis.data.go.kr/B551011/TatsCnctrRateService"
+
+# 법정동 코드 기준 서울특별시
+SEOUL_AREA_CD = "11"
+
+# 서울 25개 자치구 (한국관광공사_OpenAPI_관광지_시군구_코드정보_v1.0.xlsx)
+SEOUL_SIGUNGU_CODES: dict[str, str] = {
+    "11110": "종로구", "11140": "중구", "11170": "용산구", "11200": "성동구",
+    "11215": "광진구", "11230": "동대문구", "11260": "중랑구", "11290": "성북구",
+    "11305": "강북구", "11320": "도봉구", "11350": "노원구", "11380": "은평구",
+    "11410": "서대문구", "11440": "마포구", "11470": "양천구", "11500": "강서구",
+    "11530": "구로구", "11545": "금천구", "11560": "영등포구", "11590": "동작구",
+    "11620": "관악구", "11650": "서초구", "11680": "강남구", "11710": "송파구",
+    "11740": "강동구",
+}
+
+# TourAPI 콘텐츠 타입. 집중률 목록에 박물관·미술관이 섞여 있어 문화시설도 받는다.
+CONTENT_TYPE_TOURIST_SPOT = 12
+CONTENT_TYPE_CULTURAL = 14
 
 # 장소 유형 분류용 키워드. TourAPI 의 cat3 코드로도 되지만
 # 코드표를 통째로 들고 있어야 해서, 우선 이름·분류 텍스트로 가른다.
@@ -103,10 +124,67 @@ class TourApiClient:
         return [RawPlace(row) for row in rows]
 
     def fetch_visitor_stats(self) -> list[RawVisitorStat]:
-        # 한국관광 데이터랩의 방문자 통계는 TourAPI 와 다른 계통이라
-        # 별도 연동이 필요하다. 데이터를 확보하면 여기를 채운다.
-        logger.warning("방문자 통계 연동이 아직 없습니다. 빈 목록을 반환합니다.")
+        # 집중률 API 가 이 역할을 대신하므로 더 이상 쓰지 않는다.
         return []
+
+    def fetch_places_paged(
+        self, *, area_code: int, content_type_id: int, page_size: int = 200
+    ) -> list[RawPlace]:
+        """전체 페이지를 돌며 장소를 모은다. 서울 관광지는 400여 건이라 2~3회다."""
+        collected: list[RawPlace] = []
+        page = 1
+        while True:
+            rows = self._get(
+                "areaBasedList2",
+                {
+                    "areaCode": area_code,
+                    "contentTypeId": content_type_id,
+                    "numOfRows": page_size,
+                    "pageNo": page,
+                    "arrange": "A",
+                },
+            )
+            if not rows:
+                break
+            collected.extend(RawPlace(row) for row in rows)
+            if len(rows) < page_size:
+                break
+            page += 1
+            if page > 20:  # 폭주 방지
+                logger.warning("페이지 한도(20)에 걸려 중단합니다.")
+                break
+        return collected
+
+    def fetch_concentration(self, *, signgu_cd: str) -> list[dict]:
+        """
+        한 자치구의 관광지별 향후 30일 집중률.
+
+        한 번에 그 구의 모든 장소 × 30일이 오므로 구당 1회면 충분하다.
+        종로구가 2,938행으로 가장 크다.
+        """
+        query = {
+            "serviceKey": self._api_key,
+            "MobileOS": "ETC",
+            "MobileApp": "hanjeok",
+            "_type": "json",
+            "areaCd": SEOUL_AREA_CD,
+            "signguCd": signgu_cd,
+            "numOfRows": 5000,
+            "pageNo": 1,
+        }
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.get(
+                f"{CNCTR_API_BASE}/tatsCnctrRatedList", params=query
+            )
+            response.raise_for_status()
+            payload = response.json()
+
+        body = payload.get("response", {}).get("body", {})
+        items = body.get("items")
+        if not items:
+            logger.warning("집중률 응답에 items 없음 (구 %s)", signgu_cd)
+            return []
+        return items.get("item", [])
 
 
 # ──────────────────────────────────────────────────────────────

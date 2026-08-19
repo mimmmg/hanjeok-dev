@@ -50,6 +50,38 @@ def fetch_places(client: Client) -> list[dict]:
     return response.data or []
 
 
+def upsert_places(client: Client, rows: list[dict]) -> int:
+    """
+    장소 마스터를 저장한다.
+
+    kto_content_id UNIQUE 로 upsert 하므로 동기화를 여러 번 돌려도
+    중복이 생기지 않고 정보만 갱신된다. 스키마에 이 제약을 미리 걸어둔 게
+    여기서 값을 한다.
+    """
+    written = 0
+    for start in range(0, len(rows), UPSERT_CHUNK):
+        chunk = rows[start : start + UPSERT_CHUNK]
+        client.table("place").upsert(chunk, on_conflict="kto_content_id").execute()
+        written += len(chunk)
+    return written
+
+
+def delete_mock_places(client: Client) -> int:
+    """
+    화면 작업용으로 넣었던 mock 장소를 지운다.
+
+    kto_content_id 에 'mock-' 접두사를 붙여둔 게 이 순간을 위해서였다.
+    congestion_forecast·user_favorite 은 on delete cascade 로 함께 정리된다.
+    """
+    response = (
+        client.table("place")
+        .delete()
+        .like("kto_content_id", "mock-%")
+        .execute()
+    )
+    return len(response.data or [])
+
+
 def upsert_forecasts(
     client: Client,
     *,
