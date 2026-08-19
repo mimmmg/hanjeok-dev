@@ -122,6 +122,7 @@ class ScoreDetail:
     crowd: float
     access: float
     weather: float
+    day_factor: float
     peak_level: float
 
 
@@ -131,11 +132,15 @@ def score_place_day(
     profile: str,
     walk_minutes: int | None,
     hourly_weather: list[HourWeather],
+    day_factor: float = 1.0,
 ) -> tuple[list[HourForecast], ScoreDetail]:
     """
     한 장소의 하루치 시간대별 혼잡 예측치를 만든다.
 
     popularity: 방문자 통계를 0~1 로 정규화한 값 (transform.normalize_popularity)
+    day_factor: 요일·계절 계수 (datasets.day_factor). 국가유산청 4대궁
+        일별 실측에서 뽑은 값이다. 토요일은 1.34, 월요일은 0.56 —
+        이 계수가 없으면 토요일과 월요일을 똑같이 예측한다.
     """
     crowd = _clamp(popularity * 100.0)
     access = access_score(walk_minutes)
@@ -150,8 +155,12 @@ def score_place_day(
         else 50.0
     )
 
-    peak_level = (
-        crowd * WEIGHT_CROWD + access * WEIGHT_ACCESS + weather_avg * WEIGHT_WEATHER
+    # 요일·계절은 가중합의 항목이 아니라 전체에 곱하는 계수다.
+    # "토요일이라 20% 더 붐빈다"는 다른 항목과 더할 성질이 아니라
+    # 그날 전체 수요를 키우고 줄이는 배율이기 때문이다.
+    peak_level = _clamp(
+        (crowd * WEIGHT_CROWD + access * WEIGHT_ACCESS + weather_avg * WEIGHT_WEATHER)
+        * day_factor
     )
 
     curve = HOUR_PROFILES.get(profile, HOUR_PROFILES["indoor"])
@@ -167,5 +176,6 @@ def score_place_day(
         crowd=round(crowd, 1),
         access=round(access, 1),
         weather=round(weather_avg, 1),
+        day_factor=round(day_factor, 3),
         peak_level=round(peak_level, 1),
     )

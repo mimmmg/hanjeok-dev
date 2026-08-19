@@ -71,3 +71,20 @@ def get_weather_source() -> WeatherSource:
         logger.warning("WEATHER_API_KEY 가 없어 mock 날씨로 동작합니다.")
         return MockWeatherSource()
     return KmaClient(settings.weather_api_key or "")
+
+
+def fetch_hourly_safe(
+    source: WeatherSource, *, lat: float, lng: float
+) -> tuple[list[HourWeather], str | None]:
+    """
+    날씨를 받아오되 실패해도 배치를 죽이지 않는다.
+
+    날씨는 스코어의 20% 항목일 뿐이라, 못 받았다고 예측 전체를 포기하는 건
+    과한 대응이다. mock 으로 떨어뜨리고 그 사실을 호출한 쪽에 알려
+    결과에 함께 표시되게 한다 — 조용히 mock 을 쓰는 게 제일 나쁘다.
+    """
+    try:
+        return source.fetch_hourly(lat=lat, lng=lng), None
+    except Exception as exc:  # noqa: BLE001 — 어떤 실패든 mock 으로 계속 간다
+        logger.warning("날씨 조회 실패, mock 으로 대체합니다: %s", exc)
+        return MockWeatherSource().fetch_hourly(lat=lat, lng=lng), str(exc)

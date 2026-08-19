@@ -14,11 +14,12 @@ from dataclasses import dataclass
 from datetime import date, datetime
 
 from app.config import KTO_AREA_CODE_SEOUL, KTO_CONTENT_TYPE_TOURIST_SPOT, SEOUL_TZ
+from app.datasets import day_factor, measured_daily_visitors
 from app.kto import classify_profile, get_kto_source
 from app.scoring import HourForecast, score_place_day
 from app.store import fetch_places, get_client, upsert_many
 from app.transform import clean_places, normalize_popularity
-from app.weather import get_weather_source
+from app.weather import fetch_hourly_safe, get_weather_source
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,31 @@ def parse_walk_minutes(access_desc: str | None) -> int | None:
 
 def seoul_today() -> date:
     return datetime.now(SEOUL_TZ).date()
+
+
+# 실측 일평균을 0~1 인기도로 바꿀 때 쓰는 기준.
+# 경복궁 일평균이 약 18,900명이라, 2만 명을 "가장 붐비는 축"으로 놓는다.
+# 이 값을 넘는 장소는 1.0 으로 묶인다.
+MEASURED_VISITOR_CEILING = 20_000.0
+
+# 날씨를 대표로 받아올 지점 — 서울 시청 부근.
+# 서비스 지역이 서울 한 도시라 구별로 예보를 나눌 실익이 없다.
+SEOUL_CENTER_LAT = 37.5665
+SEOUL_CENTER_LNG = 126.9780
+
+
+def _popularity_from_measured(measured: dict[str, float]) -> dict[str, float]:
+    """
+    실측 일평균 관람객을 0~1 인기도로 바꾼다.
+
+    KTO 수집분과 달리 서로 비교해 정규화하지 않고 절대 기준(2만 명)을 쓴다.
+    실측 대상이 5곳뿐이라 상대 정규화하면 그 안에서만 줄을 세우게 되고,
+    "종묘가 5곳 중 꼴찌"라는 이유로 인기도 0 이 되어버린다.
+    """
+    return {
+        name: min(1.0, visitors / MEASURED_VISITOR_CEILING)
+        for name, visitors in measured.items()
+    }
 
 
 @dataclass
@@ -115,11 +141,25 @@ def run_forecast_job(*, dry_run: bool = False) -> JobResult:
         )
 
     # 이름으로 잇는다. kto_content_id 가 실데이터로 바뀌면 그 컬럼으로 바꾼다.
-    by_name = {row["name"]: row for row in db_places}
     popularity_by_name = dict(zip(cleaned["name"], cleaned["popularity"]))
 
+    # 실측 일평균이 있는 장소(4대궁·종묘)는 추정 대신 실측으로 인기도를 매긴다.
+    measured = measured_daily_visitors()
+    measured_pop = _popularity_from_measured(measured)
+
+    factor = day_factor(forecast_date)
+
+    # 날씨는 한 번만 받아 모든 장소에 쓴다. 서비스 지역이 서울 한 도시라
+    # 장소마다 부르면 같은 예보를 15번 받게 된다.
+    hourly, weather_error = fetch_hourly_safe(
+        weather_source, lat=SEOUL_CENTER_LAT, lng=SEOUL_CENTER_LNG
+    )
+    if weather_error:
+        notes.append(f"날씨 조회 실패로 mock 을 썼습니다: {weather_error}")
+
     by_place: dict[str, list[HourForecast]] = {}
-    matched = 0
+    matched_kto = 0
+    matched_measured = 0
 
     for db_place in db_places:
         name = db_place["name"]
@@ -128,35 +168,40 @@ def run_forecast_job(*, dry_run: bool = False) -> JobResult:
         if lat is None or lng is None:
             continue
 
-        # KTO 쪽에 없는 장소는 이름으로 유형만 추정하고 인기도는 중간값으로 둔다.
-        # 시드 데이터(15곳)와 KTO mock(4곳)이 다르기 때문에 필요한 처리다.
-        pop = popularity_by_name.get(name)
-        if pop is None:
-            pop = 0.5
+        # 우선순위: 실측 통계 > KTO 수집분 > 중간값.
+        # 실측이 있는데 추정을 쓰면 가진 근거를 버리는 셈이다.
+        if name in measured_pop:
+            pop = measured_pop[name]
+            matched_measured += 1
+        elif name in popularity_by_name:
+            pop = float(popularity_by_name[name])
+            matched_kto += 1
         else:
-            matched += 1
+            pop = 0.5
 
         profile = classify_profile(name, db_place.get("category"))
-        hourly = weather_source.fetch_hourly(lat=float(lat), lng=float(lng))
 
         forecasts, _detail = score_place_day(
-            popularity=float(pop),
+            popularity=pop,
             profile=profile,
             walk_minutes=parse_walk_minutes(db_place.get("access_desc")),
             hourly_weather=hourly,
+            day_factor=factor,
         )
         by_place[db_place["id"]] = forecasts
 
     written = upsert_many(client, forecast_date=forecast_date, by_place=by_place)
 
+    weekday_names = "월화수목금토일"
     notes.append(
-        f"DB 장소 {len(db_places)}곳 중 {matched}곳이 KTO 수집분과 이름으로 연결됐습니다."
+        f"{weekday_names[forecast_date.weekday()]}요일 · {forecast_date.month}월 "
+        f"계수 {factor:.2f} 적용"
     )
-    if matched < len(db_places):
-        notes.append(
-            "나머지는 인기도 중간값으로 계산했습니다. KTO 실데이터가 들어오면 해소됩니다."
-        )
-    _ = by_name  # 이름 인덱스는 향후 kto_content_id 매칭으로 교체 예정
+    notes.append(
+        f"DB 장소 {len(db_places)}곳 중 실측 {matched_measured}곳, "
+        f"KTO 수집 {matched_kto}곳, 추정 "
+        f"{len(db_places) - matched_measured - matched_kto}곳"
+    )
 
     return JobResult(
         forecast_date=forecast_date,
@@ -171,8 +216,10 @@ def run_forecast_job(*, dry_run: bool = False) -> JobResult:
 def _score_without_db(cleaned, weather_source) -> list[dict]:
     """DB 없이 계산만 해본다. 파이프라인 점검용."""
     results: list[dict] = []
+    hourly, _ = fetch_hourly_safe(
+        weather_source, lat=SEOUL_CENTER_LAT, lng=SEOUL_CENTER_LNG
+    )
     for row in cleaned.itertuples():
-        hourly = weather_source.fetch_hourly(lat=float(row.lat), lng=float(row.lng))
         forecasts, detail = score_place_day(
             popularity=float(row.popularity),
             profile=row.profile,
