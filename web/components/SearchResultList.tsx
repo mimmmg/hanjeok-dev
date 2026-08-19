@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { Icon } from '@/components/Icon'
 import { SearchResultCard } from '@/components/SearchResultCard'
@@ -134,7 +135,14 @@ export function SearchResultList({
           className="bg-ink text-screen zin sticky bottom-4 z-30 mx-4 flex items-center gap-2 rounded-md px-4 py-3 text-ui font-medium shadow-[0_10px_30px_rgb(27_48_34_/_0.26)]"
         >
           <Icon name="check_circle" size={20} filled className="text-calm" />
-          {toast}
+          <span className="flex-1">{toast}</span>
+          {/* 담자마자 확인하러 갈 수 있게 — 관심 장소함으로 가는 유일한 통로다 */}
+          <Link
+            href="/favorites"
+            className="font-display text-calm flex-none text-ui font-bold underline underline-offset-2"
+          >
+            보러가기
+          </Link>
         </div>
       )}
     </>
