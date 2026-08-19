@@ -89,7 +89,7 @@ export default async function SearchResultsPage({
     places.every((p) => p.forecastDate !== null && p.forecastDate !== today)
 
   return (
-    <DeviceFrame title="검색 결과" backHref="/search" showTabBar>
+    <DeviceFrame title="검색 결과" backHref="/search">
       <div className="px-6 pt-5 pb-4">
         <SearchForm initialQuery={query} />
 

@@ -4,6 +4,7 @@ import { CongestionChart } from '@/components/CongestionChart'
 import { CongestionGauge } from '@/components/CongestionGauge'
 import { DeviceFrame } from '@/components/DeviceFrame'
 import { DistanceFromMe } from '@/components/DistanceFromMe'
+import { Icon } from '@/components/Icon'
 import { PlaceDetailActions } from '@/components/PlaceDetailActions'
 import type { HourSlot } from '@/types/forecast'
 import {
@@ -11,6 +12,7 @@ import {
   CONGESTION_STYLE,
   congestionLevel,
 } from '@/utils/congestionLevel'
+import { kakaoDirectionsUrl } from '@/utils/mapLink'
 import { seoulHour, seoulToday } from '@/utils/seoulTime'
 import { createClient } from '@/utils/supabase/server'
 
@@ -102,6 +104,14 @@ export default async function PlaceDetailPage({
     .maybeSingle()
 
   const isStale = forecastDate !== null && forecastDate !== today
+
+  // 좌표가 있으면 좌표로, 없으면 주소로 길찾기를 연다
+  const mapUrl = kakaoDirectionsUrl({
+    name: place.name,
+    lat: place.lat,
+    lng: place.lng,
+    address: place.address,
+  })
 
   return (
     <DeviceFrame title={place.name} backHref="/search">
@@ -212,17 +222,15 @@ export default async function PlaceDetailPage({
             )}
           </dl>
 
-          {place.address && (
+          {mapUrl && (
             <a
-              href={`https://map.kakao.com/?q=${encodeURIComponent(place.address)}`}
+              href={mapUrl}
               target="_blank"
               rel="noreferrer"
-              className="font-display text-terra-link mt-4 inline-flex items-center gap-1 text-ui font-semibold"
+              className="font-display bg-ink text-screen mt-4 flex min-h-tap items-center justify-center gap-2 rounded-full text-ui font-bold transition-colors hover:bg-[#132218]"
             >
-              카카오맵에서 길찾기
-              <span className="ms text-[16px]" aria-hidden>
-                arrow_forward
-              </span>
+              <Icon name="directions" size={19} />
+              카카오맵으로 길찾기
             </a>
           )}
         </section>

@@ -9,6 +9,7 @@ import { DeviceFrame } from '@/components/DeviceFrame'
 import { Icon } from '@/components/Icon'
 import { TRAVEL_MODE_LABEL, toTravelMode } from '@/types/travel'
 import { scoreAlternative } from '@/utils/alternativeScore'
+import { CONGESTION_THRESHOLDS } from '@/utils/congestionLevel'
 import { distanceKm } from '@/utils/distance'
 import { seoulHour } from '@/utils/seoulTime'
 import { createClient } from '@/utils/supabase/server'
@@ -51,6 +52,11 @@ export default async function AlternativesPage({
     .maybeSingle()
 
   const basePct = baseForecast?.congestion_pct ?? null
+
+  // 혼잡할 때와 여유로울 때 화면의 성격이 다르다.
+  // 전자는 "여기 말고 저기", 후자는 "겸사겸사 근처도".
+  const isCrowded =
+    basePct !== null && basePct >= CONGESTION_THRESHOLDS.busy
 
   /*
    * ── 후보 ──
@@ -120,15 +126,25 @@ export default async function AlternativesPage({
             {base.district ?? '서울'} · {TRAVEL_MODE_LABEL[mode]} 기준
           </p>
           <h2 className="font-display mt-2 text-title font-bold tracking-[-0.01em]">
-            {base.name} 대신 가볼 만한 곳
+            {isCrowded
+              ? `${base.name} 대신 가볼 만한 곳`
+              : `${base.name} 근처 가볼 만한 곳`}
           </h2>
           <p className="text-body mt-2 text-label leading-relaxed">
-            {basePct !== null && (
-              <>
-                지금 {base.name}은(는){' '}
-                <strong className="text-ink tabular">{basePct}</strong>입니다.{' '}
-              </>
-            )}
+            {basePct !== null &&
+              (isCrowded ? (
+                <>
+                  지금 {base.name}은(는){' '}
+                  <strong className="text-ink tabular">{basePct}</strong>로
+                  붐빕니다.{' '}
+                </>
+              ) : (
+                <>
+                  {base.name}은(는) 지금{' '}
+                  <strong className="text-ink tabular">{basePct}</strong>로
+                  여유롭습니다. 겸사겸사 들를 만한 곳입니다.{' '}
+                </>
+              ))}
             혼잡도와 접근성을 함께 계산해 {alternatives.length}곳을 골랐습니다.
           </p>
         </header>

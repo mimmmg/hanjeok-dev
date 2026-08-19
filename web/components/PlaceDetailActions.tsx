@@ -37,10 +37,17 @@ export function PlaceDetailActions({
   const [error, setError] = useState<string | null>(null)
 
   /*
-   * 혼잡 기준을 넘을 때만 "대안 보기"를 노출한다 (PRD ⑤ 분기 로직).
-   * 한적한 곳을 보고 있는 사람에게 대안을 들이미는 건 방해다.
+   * 근처 장소를 보여주는 버튼은 항상 둔다. 다만 성격이 갈린다:
+   *
+   * - 혼잡할 때(70↑): "한적한 대안" — 지금 문제를 해결하는 행동이라
+   *   테라코타로 강조하고 왜 필요한지 안내 문구도 함께 띄운다.
+   * - 여유로울 때: "근처 둘러보기" — 문제 해결이 아니라 탐색이므로
+   *   선만 두른 약한 버튼으로 둔다.
+   *
+   * PRD ⑤ 의 "혼잡 시 분기"는 강조의 차이로 지킨다. 한적한데도 대안을
+   * 들이미는 건 방해지만, 근처에 뭐가 있는지 궁금한 건 늘 유효한 질문이다.
    */
-  const showAlternatives =
+  const isCrowded =
     currentPct !== null && currentPct >= CONGESTION_THRESHOLDS.busy
 
   async function handleSave() {
@@ -120,18 +127,20 @@ export function PlaceDetailActions({
           {saving ? '담는 중…' : saved ? '관심 장소함에 있음' : '관심 장소에 담기'}
         </button>
 
-        {showAlternatives && (
-          <Link
-            href={`/place/${placeId}/alternatives?mode=${mode}`}
-            className="font-display text-ink flex min-h-14 items-center justify-center gap-2 rounded-full border border-[rgb(27_48_34_/_0.14)] px-5 text-base font-bold transition-colors hover:bg-[rgb(27_48_34_/_0.04)]"
-          >
-            <Icon name="compare_arrows" size={20} />
-            한적한 대안 보기
-          </Link>
-        )}
+        <Link
+          href={`/place/${placeId}/alternatives?mode=${mode}`}
+          className={`font-display flex min-h-14 items-center justify-center gap-2 rounded-full px-5 text-base font-bold transition-colors ${
+            isCrowded
+              ? 'bg-ink text-screen hover:bg-[#132218]'
+              : 'text-ink border border-[rgb(27_48_34_/_0.14)] hover:bg-[rgb(27_48_34_/_0.04)]'
+          }`}
+        >
+          <Icon name="compare_arrows" size={20} />
+          {isCrowded ? '한적한 대안 보기' : '근처 둘러보기'}
+        </Link>
       </div>
 
-      {showAlternatives && (
+      {isCrowded && (
         <p className="bg-calm-tint text-calm-fg flex items-start gap-2 rounded-xs border border-[rgb(170_166_72_/_0.34)] p-3 text-caption leading-relaxed">
           <Icon name="info" size={16} className="mt-px" />
           <span>

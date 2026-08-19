@@ -17,7 +17,7 @@ export const metadata: Metadata = {
  */
 export default function SearchPage() {
   return (
-    <DeviceFrame title="탐색" showTabBar>
+    <DeviceFrame title="탐색">
       <div className="px-6 pt-6">
         <div className="zin">
           <h2 className="font-display text-[26px] leading-[1.25] font-bold tracking-[-0.02em]">

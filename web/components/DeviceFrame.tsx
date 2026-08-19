@@ -8,22 +8,20 @@ import { TabBar } from '@/components/TabBar'
  *
  * 데스크톱에서는 연한 그린 바탕 위에 화면을 띄우고, 470px 이하에서는
  * 프레임을 풀어 실제 모바일 화면을 꽉 채운다.
+ *
+ * 하단 탭바는 모든 화면에 고정으로 둔다. 프로토타입은 상세·대안에서
+ * 탭바를 뺐지만, 깊이 들어간 화면에서도 탐색·관심 장소함으로 바로 갈 수
+ * 있는 편이 낫다는 판단이다. 뒤로가기는 상단 화살표가 맡는다.
  * (데스크톱 전용 2컬럼 레이아웃은 별도 설계 예정 — PROGRESS.md 참고)
  */
 export function DeviceFrame({
   title,
   backHref,
-  showTabBar = false,
   children,
 }: {
   title?: string
   /** 넘기면 상단에 뒤로가기 버튼이 생긴다 */
   backHref?: string
-  /**
-   * 하단 탭바 노출. 최상위 화면(탐색·검색결과·관심 장소함)만 true 다.
-   * 상세·대안처럼 뒤로가기로 빠져나오는 화면에는 두지 않는다.
-   */
-  showTabBar?: boolean
   children: ReactNode
 }) {
   return (
@@ -65,7 +63,7 @@ export function DeviceFrame({
           {children}
         </div>
 
-        {showTabBar && <TabBar />}
+        <TabBar />
       </div>
     </div>
   )

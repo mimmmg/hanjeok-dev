@@ -20,6 +20,7 @@ export const ICON_NAMES = [
   'close',
   'delete',
   'compare_arrows',
+  'directions',
   'directions_car',
   'directions_walk',
   'error',

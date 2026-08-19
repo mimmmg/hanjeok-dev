@@ -66,9 +66,10 @@ class Forecast(BaseModel):
 
 
 class SyncResponse(BaseModel):
-    tour_places: int
     concentration_places: int
-    matched: int
+    tour_places: int
+    with_coords: int
+    without_coords: int
     written: int
     notes: list[str]
 
@@ -124,9 +125,10 @@ def trigger_place_sync(dry_run: bool = False) -> SyncResponse:
     """
     result = run_place_sync_job(dry_run=dry_run)
     return SyncResponse(
-        tour_places=result.tour_places,
         concentration_places=result.concentration_places,
-        matched=result.matched,
+        tour_places=result.tour_places,
+        with_coords=result.with_coords,
+        without_coords=result.without_coords,
         written=result.written,
         notes=result.notes,
     )
