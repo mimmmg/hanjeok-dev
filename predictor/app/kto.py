@@ -48,6 +48,11 @@ SEOUL_SIGUNGU_CODES: dict[str, str] = {
     "11740": "강동구",
 }
 
+# 구 이름 → 코드. 장소 하나의 집중률만 조회할 때 쓴다.
+SIGUNGU_CODE_BY_NAME: dict[str, str] = {
+    name: code for code, name in SEOUL_SIGUNGU_CODES.items()
+}
+
 # TourAPI 콘텐츠 타입. 집중률 목록에 박물관·미술관이 섞여 있어 문화시설도 받는다.
 CONTENT_TYPE_TOURIST_SPOT = 12
 CONTENT_TYPE_CULTURAL = 14

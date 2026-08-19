@@ -20,12 +20,13 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from app.config import SEOUL_TZ, settings
-from app.jobs import parse_walk_minutes, run_forecast_job, seoul_today
-from app.kto import classify_profile
-from app.scoring import score_place_day
+from app.jobs import SEOUL_CENTER_LAT, SEOUL_CENTER_LNG, run_forecast_job, seoul_today
+from app.kto import SIGUNGU_CODE_BY_NAME, TourApiClient, classify_profile
+from app.scoring import score_from_concentration
 from app.scheduler import shutdown_scheduler, start_scheduler
 from app.store import get_client
-from app.weather import get_weather_source
+from app.sync import run_place_sync_job
+from app.weather import fetch_hourly_safe, get_weather_source
 
 logging.basicConfig(
     level=logging.INFO,
@@ -62,6 +63,14 @@ class Forecast(BaseModel):
     slots: list[HourSlot]
     is_mock: bool
     """실제 KTO 데이터인지 mock 인지. UI 의 '예측치' 표기 판단 근거"""
+
+
+class SyncResponse(BaseModel):
+    tour_places: int
+    concentration_places: int
+    matched: int
+    written: int
+    notes: list[str]
 
 
 class JobResponse(BaseModel):
@@ -105,24 +114,42 @@ def trigger_forecast(dry_run: bool = False) -> JobResponse:
     )
 
 
+@app.post("/jobs/sync-places", response_model=SyncResponse)
+def trigger_place_sync(dry_run: bool = False) -> SyncResponse:
+    """
+    장소 마스터를 KTO 실데이터로 동기화한다.
+
+    집중률 API 와 TourAPI 의 교집합을 place 에 넣는다. 자주 바뀌는 정보가
+    아니라 예측 배치와 달리 스케줄에 걸지 않았다 — 필요할 때 부른다.
+    """
+    result = run_place_sync_job(dry_run=dry_run)
+    return SyncResponse(
+        tour_places=result.tour_places,
+        concentration_places=result.concentration_places,
+        matched=result.matched,
+        written=result.written,
+        notes=result.notes,
+    )
+
+
 @app.get("/forecast", response_model=Forecast)
 def get_forecast(place_id: str, forecast_date: date | None = None) -> Forecast:
     """
     한 장소의 시간대별 예측치를 그 자리에서 계산해 돌려준다.
 
-    화면이 읽는 경로는 이쪽이 아니라 congestion_forecast 테이블이다.
-    이 엔드포인트는 "저장된 값이 왜 저렇게 나왔나"를 확인하는 용도다.
+    화면이 읽는 정상 경로는 congestion_forecast 테이블이다. 이 엔드포인트는
+    Next.js Route Handler 가 "가장 최신 값"을 원할 때, 그리고 저장된 값이
+    왜 저렇게 나왔는지 확인할 때 쓴다.
     """
     if not settings.can_write_db:
-        raise HTTPException(
-            status_code=503,
-            detail="Supabase 설정이 없어 장소 정보를 읽을 수 없습니다.",
-        )
+        raise HTTPException(status_code=503, detail="Supabase 설정이 없습니다.")
+    if settings.use_mock_kto:
+        raise HTTPException(status_code=503, detail="KTO_API_KEY 가 없습니다.")
 
     client = get_client()
     response = (
         client.table("place")
-        .select("id, name, category, access_desc, lat, lng")
+        .select("id, name, category, district, lat, lng")
         .eq("id", place_id)
         .maybe_single()
         .execute()
@@ -131,27 +158,48 @@ def get_forecast(place_id: str, forecast_date: date | None = None) -> Forecast:
     if not place:
         raise HTTPException(status_code=404, detail="장소를 찾을 수 없습니다.")
 
-    lat, lng = place.get("lat"), place.get("lng")
-    if lat is None or lng is None:
-        raise HTTPException(status_code=422, detail="장소에 좌표가 없습니다.")
+    signgu_cd = SIGUNGU_CODE_BY_NAME.get(place.get("district") or "")
+    if not signgu_cd:
+        raise HTTPException(status_code=422, detail="서울 자치구 정보가 없습니다.")
 
-    hourly = get_weather_source().fetch_hourly(lat=float(lat), lng=float(lng))
-    forecasts, _detail = score_place_day(
-        # 단건 조회라 다른 장소와 비교할 수 없다. 중간값으로 둔다 —
-        # 정확한 인기도는 전체를 함께 정규화하는 배치에서만 나온다.
-        popularity=0.5,
+    target = forecast_date or seoul_today()
+
+    # 그 구의 집중률에서 이 장소·이 날짜를 찾는다
+    kto = TourApiClient(settings.kto_api_key or "")
+    rate: float | None = None
+    for row in kto.fetch_concentration(signgu_cd=signgu_cd):
+        if row.get("tAtsNm") != place["name"]:
+            continue
+        if row.get("baseYmd") != target.strftime("%Y%m%d"):
+            continue
+        try:
+            rate = float(row.get("cnctrRate", 0))
+        except (TypeError, ValueError):
+            rate = None
+        break
+
+    if rate is None:
+        raise HTTPException(
+            status_code=404, detail="해당 날짜의 집중률이 없습니다."
+        )
+
+    # 날씨는 실패해도 계산을 계속한다 — 스코어의 일부일 뿐이다
+    hourly, _ = fetch_hourly_safe(
+        get_weather_source(), lat=SEOUL_CENTER_LAT, lng=SEOUL_CENTER_LNG
+    )
+    forecasts, _detail = score_from_concentration(
+        concentration_rate=rate,
         profile=classify_profile(place["name"], place.get("category")),
-        walk_minutes=parse_walk_minutes(place.get("access_desc")),
         hourly_weather=hourly,
     )
 
     return Forecast(
         place_id=place_id,
-        forecast_date=forecast_date or seoul_today(),
+        forecast_date=target,
         computed_at=datetime.now(SEOUL_TZ),
         slots=[
             HourSlot(hour_slot=f.hour_slot, congestion_pct=f.congestion_pct)
             for f in forecasts
         ],
-        is_mock=settings.use_mock_kto,
+        is_mock=False,
     )
