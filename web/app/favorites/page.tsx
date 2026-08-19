@@ -62,7 +62,7 @@ export default async function FavoritesPage() {
     .sort((a, b) => b.addedAt.localeCompare(a.addedAt))
 
   return (
-    <DeviceFrame title="관심 장소함" backHref="/search">
+    <DeviceFrame title="관심 장소함" showTabBar>
       <FavoritesView initialFavorites={favorites} />
     </DeviceFrame>
   )

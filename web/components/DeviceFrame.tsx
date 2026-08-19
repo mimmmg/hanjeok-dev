@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Icon } from '@/components/Icon'
+import { TabBar } from '@/components/TabBar'
 
 /**
  * 430 × 880 모바일 앱 화면 프레임. prototype/style.css 의 .device 를 옮긴 것.
@@ -12,11 +13,17 @@ import { Icon } from '@/components/Icon'
 export function DeviceFrame({
   title,
   backHref,
+  showTabBar = false,
   children,
 }: {
   title?: string
   /** 넘기면 상단에 뒤로가기 버튼이 생긴다 */
   backHref?: string
+  /**
+   * 하단 탭바 노출. 최상위 화면(탐색·검색결과·관심 장소함)만 true 다.
+   * 상세·대안처럼 뒤로가기로 빠져나오는 화면에는 두지 않는다.
+   */
+  showTabBar?: boolean
   children: ReactNode
 }) {
   return (
@@ -57,6 +64,8 @@ export function DeviceFrame({
         <div className="flex-1 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {children}
         </div>
+
+        {showTabBar && <TabBar />}
       </div>
     </div>
   )

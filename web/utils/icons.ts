@@ -23,6 +23,7 @@ export const ICON_NAMES = [
   'directions_car',
   'directions_walk',
   'error',
+  'explore',
   'favorite',
   'fingerprint',
   'info',
