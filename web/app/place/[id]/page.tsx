@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { CongestionChart } from '@/components/CongestionChart'
 import { CongestionGauge } from '@/components/CongestionGauge'
 import { DeviceFrame } from '@/components/DeviceFrame'
+import { DistanceFromMe } from '@/components/DistanceFromMe'
 import { PlaceDetailActions } from '@/components/PlaceDetailActions'
 import type { HourSlot } from '@/types/forecast'
 import {
@@ -48,7 +49,9 @@ export default async function PlaceDetailPage({
 
   const { data: place } = await supabase
     .from('place')
-    .select('id, name, name_en, district, category, address, access_desc, fee')
+    .select(
+      'id, name, name_en, district, category, address, access_desc, fee, lat, lng',
+    )
     .eq('id', id)
     .maybeSingle()
 
@@ -112,6 +115,15 @@ export default async function PlaceDetailPage({
               </h2>
               <p className="text-faint mt-1 text-caption">
                 {[place.category, place.district].filter(Boolean).join(' · ')}
+                {/*
+                  위치 권한이 있으면 거리를 덧붙인다. 없으면 아무것도 그리지
+                  않아 이 줄은 그대로다 (PRD ⑦ — 권한 거부 시 거리만 생략).
+                */}
+                <DistanceFromMe
+                  lat={place.lat}
+                  lng={place.lng}
+                  className="before:content-['_·_']"
+                />
               </p>
             </div>
           </div>

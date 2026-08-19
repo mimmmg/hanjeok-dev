@@ -30,16 +30,20 @@ const DRY_RUN = process.argv.includes('--dry-run')
 
 // ── 환경변수 확인 ────────────────────────────────────────────────
 const SUPABASE_URL = process.env.SUPABASE_URL
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!DRY_RUN && (!SUPABASE_URL || !SERVICE_ROLE_KEY)) {
+// 신형 secret key(sb_secret_...)를 쓴다. 레거시 service_role JWT 이름도
+// 받아주는 건 이미 그 이름으로 적어둔 .env.seed 가 있어도 그냥 돌게 하려는 것이다.
+const SECRET_KEY =
+  process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!DRY_RUN && (!SUPABASE_URL || !SECRET_KEY)) {
   console.error(
     [
       '환경변수가 없습니다.',
       '',
       'web/.env.seed 를 만들고 아래 두 값을 넣으세요:',
       '  SUPABASE_URL=https://nqnxvhvozzstzloymovr.supabase.co',
-      '  SUPABASE_SERVICE_ROLE_KEY=<대시보드 Settings → API → service_role>',
+      '  SUPABASE_SECRET_KEY=<대시보드 → API Keys → Secret keys 의 sb_secret_...>',
       '',
       'web/.env.seed.example 을 복사해서 쓰면 됩니다.',
     ].join('\n'),
@@ -47,11 +51,11 @@ if (!DRY_RUN && (!SUPABASE_URL || !SERVICE_ROLE_KEY)) {
   process.exit(1)
 }
 
-// service_role 키는 RLS 를 우회한다. 시드는 place·congestion_forecast 에
-// 써야 하는데 두 테이블 모두 클라이언트 쓰기가 막혀 있어 이 키가 필요하다.
+// 이 키는 RLS 를 우회한다. 시드는 place·congestion_forecast 에 써야 하는데
+// 두 테이블 모두 클라이언트 쓰기가 막혀 있어 이 키가 필요하다.
 const supabase = DRY_RUN
   ? null
-  : createClient<Database>(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
+  : createClient<Database>(SUPABASE_URL!, SECRET_KEY!, {
       auth: { persistSession: false },
     })
 

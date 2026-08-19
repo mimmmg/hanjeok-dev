@@ -42,7 +42,7 @@ export default async function SearchResultsPage({
   const { data, error } = await supabase
     .from('place')
     .select(
-      'id, name, district, category, congestion_forecast(congestion_pct, forecast_date)',
+      'id, name, district, category, lat, lng, congestion_forecast(congestion_pct, forecast_date)',
     )
     .ilike('name', `%${escapeLikePattern(query)}%`)
     .eq('congestion_forecast.hour_slot', hour)
@@ -62,6 +62,8 @@ export default async function SearchResultsPage({
       category: row.category,
       congestionPct: forecast?.congestion_pct ?? null,
       forecastDate: forecast?.forecast_date ?? null,
+      lat: row.lat,
+      lng: row.lng,
     }
   })
 

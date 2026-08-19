@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Icon } from '@/components/Icon'
 import { SearchResultCard } from '@/components/SearchResultCard'
+import { useGeolocation } from '@/hooks/useGeolocation'
 import type { PlaceSearchResult } from '@/types/place'
 import { createClient } from '@/utils/supabase/client'
 import { ensureAnonymousUser } from '@/utils/supabase/ensureAnonymousUser'
@@ -31,6 +32,14 @@ export function SearchResultList({
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  /*
+   * 위치는 목록 단위로 한 번만 받아 각 카드에 내려준다.
+   * 카드마다 요청하면 같은 좌표를 여러 번 받게 되고, 권한 창도 어수선해진다.
+   * 거부하면 coords 가 null 로 남고 거리 표시만 빠진다 — 검색·담기는 그대로다.
+   */
+  const geo = useGeolocation()
+  const coords = geo.status === 'granted' ? geo.coords : null
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -88,6 +97,7 @@ export function SearchResultList({
               selected={selected.has(place.id)}
               alreadySaved={savedIds.has(place.id)}
               onToggle={() => toggle(place.id)}
+              coords={coords}
             />
           </li>
         ))}

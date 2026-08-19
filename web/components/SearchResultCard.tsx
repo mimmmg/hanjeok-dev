@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { CongestionGauge } from '@/components/CongestionGauge'
+import { DistanceFromMe } from '@/components/DistanceFromMe'
 import { Icon } from '@/components/Icon'
+import type { Coords } from '@/hooks/useGeolocation'
 import type { PlaceSearchResult } from '@/types/place'
 import { CONGESTION_STYLE, congestionLevel } from '@/utils/congestionLevel'
 
@@ -18,11 +20,14 @@ export function SearchResultCard({
   selected,
   alreadySaved,
   onToggle,
+  coords,
 }: {
   place: PlaceSearchResult
   selected: boolean
   alreadySaved: boolean
   onToggle: () => void
+  /** 목록에서 한 번만 받아 내려준 사용자 좌표. 없으면 거리 표시가 빠진다 */
+  coords: Coords | null
 }) {
   const pct = place.congestionPct
   const level = pct === null ? null : congestionLevel(pct)
@@ -85,6 +90,13 @@ export function SearchResultCard({
         <p className="text-faint mt-[3px] text-caption">
           {[place.category, place.district].filter(Boolean).join(' · ') ||
             '서울'}
+          {/* 위치 권한이 없으면 아무것도 그리지 않아 이 줄이 그대로 유지된다 */}
+          <DistanceFromMe
+            lat={place.lat}
+            lng={place.lng}
+            coords={coords}
+            className="before:content-['_·_']"
+          />
           {alreadySaved && <span className="text-terra-dark"> · 이미 담김</span>}
         </p>
 
