@@ -3,119 +3,129 @@
 > 개발 진행 로그. 결정된 것과 다음에 할 일을 기록한다.
 > 제품 근거는 `PRD.md`, 작업 규칙은 `CLAUDE.md` 참고.
 
-최종 갱신: 2026-08-18
+최종 갱신: 2026-08-19
 
 ---
 
-## 현재 단계
+## 현재 상태
 
-**뼈대(워킹 스켈레톤) 5단계 전부 완료.** 브라우저 → Next.js → Supabase / FastAPI 경로가 실제로 뚫린 것을 확인했다.
-다음은 화면 구현 단계.
+**Must 5개 화면 구현 완료 + 실데이터 연동 완료.** 로컬에서 전체 흐름이 동작한다.
+
+```
+랜딩 → 검색 → 결과(혼잡도·다중담기) → 상세(그래프·도보/차·길찾기)
+                                          ↓
+        관심 장소함(목록↔훑기·밀어서 해제)  ←  대안 비교(스코어 근거 노출)
+```
+
+---
+
+## 화면 (6개)
+
+| 경로 | 프로토타입 | 비고 |
+|---|---|---|
+| `/` | 01-landing | 정적. 상단 크롬 없음 |
+| `/search` | 02-search | 정적. 데이터 조회 없음 |
+| `/search/results?q=` | 03-results | 체크박스 다중담기, 한적한 순 정렬 |
+| `/place/[id]` | 04-detail | recharts 그래프, 도보/차, 카카오맵 길찾기 |
+| `/place/[id]/alternatives` | 05-alternatives | 스코어 계산식 노출 |
+| `/favorites` | 06·07·08 | 목록↔훑기 토글, 밀어서 해제, 빈 상태 |
+
+06·07·08은 프로토타입에선 HTML 3개지만 한 화면의 상태 차이라 한 페이지로 합쳤다.
+하단 탭바(탐색·관심 장소함)는 **모든 화면에 고정**.
 
 ---
 
 ## 확정된 결정
 
-| 항목 | 결정 | 비고 |
-|---|---|---|
-| 저장소 구조 | **한 저장소에 두 폴더** (`web/`, `predictor/`) | Vercel Root Directory = `web/`, Render/Railway = `predictor/`. Turborepo·pnpm workspace 미도입 |
-| Supabase 프로젝트 | **`hanjeok-dev`** / ref `nqnxvhvozzstzloymovr` / **ap-northeast-2(서울)** | 수업 실습물(`vibe-app-project`)과 분리하려고 새로 생성. 무료 $0 |
-| 스키마 관리 | Supabase MCP로 마이그레이션 적용 | `.mcp.json`이 저장소에 있음(토큰 없음, OAuth) |
-| 화면 방향 | **모바일은 프로토타입 그대로**(430px 앱 화면), **데스크톱은 전용 레이아웃 별도 설계**(리스트+상세 2컬럼) | 단, 구현 순서는 **모바일 먼저** — 검증 대상 흐름이 모바일에 있음 |
-| Node 버전 | **22** (`.nvmrc`로 고정) | Next.js 16은 `>=20.9.0` 요구. `nvm use`로 자동 전환 |
-| Python 버전 | **3.14.6** | pandas 3.0.5가 cp314 휠 제공 확인함 |
-| KTO 데이터 | API 키 발급 완료. 필요한 데이터를 요청하면 사용자가 내려받아 제공 | |
+| 항목 | 결정 |
+|---|---|
+| 저장소 | 한 저장소 두 폴더 (`web/`, `predictor/`). 작업 브랜치는 `dev` 하나 |
+| Supabase | `hanjeok-dev` / ref `nqnxvhvozzstzloymovr` / ap-northeast-2 |
+| Node / Python | 22 (`.nvmrc`) / 3.14.6 |
+| 디자인 | 프로토타입 토큰을 Tailwind v4 `@theme` 로 이식. 여백은 Tailwind 기본 스케일과 동일해 옮기지 않음 |
+| 화면 방향 | 모바일 우선(430px 프레임). **데스크톱 전용 2컬럼 레이아웃은 미착수** |
+| 스와이프 | framer-motion 대신 CSS scroll-snap + 포인터 이벤트 |
+| 차트 | 상세는 recharts, 나머지는 CSS |
 
 ---
 
-## 뼈대 구축 5단계 — 전부 완료
+## 데이터 (실데이터)
 
-- [x] **1. Supabase 프로젝트 + 3테이블 DDL** — RLS·UNIQUE·check 제약·인덱스까지 적용, 보안 경고 0건
-- [x] **2. `web/` 생성** — Next.js 16.3.1 / React 19.2.8 / Tailwind v4 / TS strict
-- [x] **3. Supabase 연결 + 익명 인증** — 서버 조회 성공, 익명 uid 발급 확인
-- [x] **4. `predictor/` 생성** — FastAPI 0.141.1, `/health` + `/forecast` 더미 곡선
-- [x] **5. 연결부 관통** — 화면에서 예측치 24개 시간대 수신, 최다 혼잡 14시 78% 표시
-- [x] **가용성 검증** — 예측 서버를 죽여도 페이지 200 + Supabase 정상, 예측 영역만 실패 표시 (PRD ⑦ 요구 충족)
+| 테이블 | 건수 | 출처 |
+|---|---|---|
+| `place` | 673곳 (좌표 289곳) | KTO 집중률 API 주도 + TourAPI 좌표 보강 |
+| `congestion_forecast` | 113,064행 | 673곳 × 7일 × 24시간 |
 
-### 실제 폴더 구조
+**집중률 API가 장소 목록의 기준이다.** 예측할 수 있는 장소가 곧 보여줄 수 있는 장소이기 때문.
+한때 TourAPI와의 교집합만 담았다가 경복궁·창덕궁·종묘·광화문이 전부 빠지는 사고가 있었다
+(TourAPI 지역기반 목록에 이들이 없다). TourAPI에도 없는 주요 20곳은 `predictor/app/landmarks.py`에 좌표를 직접 적어뒀다.
+
+좌표 없는 384곳도 저장한다 — 거리·대안 후보에서 빠질 뿐 검색·혼잡도·담기는 동작한다.
+
+---
+
+## 예측 로직
 
 ```
-hanjeok-dev/
-├─ CLAUDE.md / PRD.md / PROGRESS.md / .nvmrc / .mcp.json
-├─ prototype/              # 화면 8종 (빌드 제외)
-├─ web/                    # Next.js — Vercel
-│  ├─ app/
-│  │  ├─ layout.tsx        # lang="ko", 메타데이터
-│  │  ├─ page.tsx          # [임시] 뼈대 진단 화면
-│  │  └─ api/congestion/route.ts   # FastAPI 중계
-│  ├─ components/AnonAuthProbe.tsx  # [임시]
-│  ├─ utils/
-│  │  ├─ supabase/{client,server,updateSession,ensureAnonymousUser}.ts
-│  │  └─ predictor.ts      # FastAPI 호출 (서버 전용, 5초 타임아웃)
-│  ├─ types/{database,forecast}.ts
-│  ├─ proxy.ts             # Next 16 규약 (구 middleware.ts)
-│  └─ .env.local / .env.example
-└─ predictor/              # FastAPI — Render/Railway
-   ├─ app/main.py          # /health, /forecast
-   ├─ requirements.txt
-   └─ .env.example
+congestion_pct(시각) = KTO 집중률(일별) × 날씨보정(±15%) × 시간대분포(시각)
 ```
 
-`lib/` 폴더는 만들지 않는다 — "타입별 분리" 규칙에 따라 클라이언트류는 전부 `utils/` 아래.
+집중률에 장소 인기도·요일·계절·접근성이 이미 들어 있어 그것들을 다시 더하지 않는다.
+**우리가 더하는 건 날씨 보정과 시간대 분포 둘뿐이고, 둘 다 KTO가 주지 않는 정보다.**
 
-### 실행 방법
+⚠️ 시간대 분포는 통계가 아니라 장소 유형별 규칙이다(궁·거리·공원·실내).
+KTO는 일 단위만 준다. 화면에서 "예측치"라고 표기하는 근거가 여기에 있다.
+
+배치는 APScheduler로 **서울 기준 04시·16시** 하루 두 번.
+
+---
+
+## 아키텍처
+
+- 브라우저 → `/api/predict`(Next.js Route Handler) → FastAPI. **브라우저는 FastAPI 주소를 모른다** (HTML·JS 청크 전수 확인)
+- 예측 서비스가 죽으면 `congestion_forecast` 저장분으로 폴백. 응답의 `source`로 구분
+- 화면은 평소 DB를 직접 읽는다. Route Handler는 "가장 최신 값"이 필요할 때의 통로
+- 위치 좌표는 **서버로 보내지 않고** 브라우저에서 거리 계산 후 폐기
+
+---
+
+## 아직 안 된 것
+
+| 항목 | 상태 |
+|---|---|
+| **기상청 단기예보** | `KmaClient`가 빈 껍데기. mock 곡선으로 동작하며 실패 시 결과에 표시됨 |
+| **데스크톱 레이아웃** | 미착수. 리스트+상세 2컬럼으로 별도 설계하기로 결정됨 |
+| **임베드 지도** | 길찾기 링크만 있음. 화면 안 지도는 카카오맵 JS SDK 키 필요 |
+| **장소 상세정보** | `access_desc`·`fee`가 대부분 비어 있음. TourAPI `detailIntro2` 연동 필요(장소당 1회 호출) |
+| **배포** | Vercel Root Directory=`web` + 환경변수 3개 등록됨. `main` 머지 전이라 배포본은 옛 코드 |
+| **날씨 표시** | 대안 카드에 "연동 예정"으로 표기 중 |
+
+---
+
+## 실행
 
 ```bash
 # 프론트
-cd web && nvm use && npm run dev          # localhost:3000
+cd web && nvm use && npm run dev            # localhost:3000
 
 # 예측 서비스
-cd predictor && ./.venv/bin/uvicorn app.main:app --port 8000
+cd predictor
+set -a; . ./.env; set +a
+./.venv/bin/uvicorn app.main:app --port 8000
+
+# 배치 수동 실행
+curl -X POST localhost:8000/jobs/sync-places   # 장소 동기화
+curl -X POST localhost:8000/jobs/forecast      # 예측 갱신
 ```
 
-### 환경변수
+---
 
-| 위치 | 변수 | 브라우저 노출 |
+## 환경변수
+
+| 위치 | 변수 | 비고 |
 |---|---|---|
-| `web/.env.local` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 노출 OK (RLS가 방어) |
-| `web/.env.local` | `PREDICTOR_API_URL` | **금지** — `NEXT_PUBLIC_` 절대 붙이지 않음 |
-| `predictor/.env` | `SUPABASE_SERVICE_ROLE_KEY`, `KTO_API_KEY` | 서버 전용. service_role은 RLS 우회 마스터 키 |
-
----
-
-## 구현 중 내린 판단 (기억해둘 것)
-
-- **익명 계정 발급 시점**: `proxy.ts`는 세션 **갱신만** 하고, 계정 발급은 사용자가 처음 장소를 담을 때 `ensureAnonymousUser()`가 한다. 방문마다 발급하면 크롤러·봇 트래픽으로 `auth.users`에 빈 계정이 쌓인다.
-- **Next.js 16 breaking change**: `middleware.ts` → **`proxy.ts`** 로 이름이 바뀌었고 export도 `proxy`. `cookies()`는 **async**. Supabase 공식 문서는 아직 middleware 기준이라 그대로 복사하면 동작하지 않는다.
-- **`web/AGENTS.md`·`web/CLAUDE.md`** 는 `next dev`가 자동 생성한다. 지워도 다시 생기므로 커밋해서 트리를 깨끗하게 유지한다.
-- **hydration mismatch 경고**는 Bitdefender 안티트래커 브라우저 확장이 원인(`bis_skin_checked` 속성 주입). 코드 문제 아님. 시크릿 창에서는 안 뜬다.
-
----
-
-## 다음 할 일
-
-1. **KTO 시드 데이터 확보 → `place` 테이블 채우기** (아래 요청 참고)
-2. **프로토타입 디자인 토큰을 Tailwind v4 `@theme`로 이식** — `prototype/style.css`의 `:root` 변수를 거의 그대로 옮길 수 있음
-3. **모바일 화면 구현** (검색 → 결과 → 상세 → 대안 → 관심 장소함)
-4. 이후 데스크톱 전용 레이아웃
-5. 임시 파일 정리: `app/page.tsx`, `components/AnonAuthProbe.tsx`
-
----
-
-## KTO 데이터 요청 현황
-
-### 지금 필요 — 서울 관광지 목록 (Place 시드용)
-
-TourAPI `areaBasedList` 엔드포인트:
-
-| 파라미터 | 값 |
-|---|---|
-| `areaCode` | `1` (서울) |
-| `contentTypeId` | `12` (관광지) |
-| 필요 필드 | `title`, `addr1`, `mapx`, `mapy`, `sigungucode`, `contentid` |
-
-→ Place의 `name` / `address` / `lng` / `lat` / `district` / `kto_content_id`에 매핑. JSON·CSV 무관, **50~100개면 충분**.
-
-### 아직 불필요 — 혼잡도 원본
-
-방문자 수 통계(한국관광 데이터랩 계열)는 예측 로직을 실제로 구현할 때 필요. 지금은 `predictor/app/main.py`의 `_MOCK_CURVE`가 더미 곡선을 반환한다.
+| `web/.env.local` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 브라우저 노출 OK (RLS가 방어) |
+| `web/.env.local` | `PREDICTOR_URL` (구 `PREDICTOR_API_URL`) | 서버 전용 |
+| `predictor/.env` | `SUPABASE_SECRET_KEY` | `sb_secret_...`. RLS 우회 마스터 키 |
+| `predictor/.env` | `KTO_API_KEY` | data.go.kr 인증키. TourAPI·집중률 공통 |
+| `predictor/.env` | `WEATHER_API_KEY` | 있어도 `KmaClient` 미구현이라 mock으로 폴백 |

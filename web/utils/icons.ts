@@ -14,6 +14,7 @@
  */
 export const ICON_NAMES = [
   'arrow_back',
+  'bookmarks',
   'arrow_forward',
   'check',
   'check_circle',
@@ -31,6 +32,7 @@ export const ICON_NAMES = [
   'list',
   'progress_activity',
   'search',
+  'sensors',
   'style',
   'travel_explore',
   'trending_down',
