@@ -10,13 +10,14 @@ import { createClient } from '@/utils/supabase/client'
 import { ensureAnonymousUser } from '@/utils/supabase/ensureAnonymousUser'
 
 /**
- * 검색 결과 리스트 + 다중선택 담기 (PRD ④ Should, 프로토타입 v2 반영).
+ * 검색 결과 리스트 (PRD ⑤ "검색 결과").
  *
- * 페르소나가 "세부 계획을 1주 전에 몰아서 짜는" 습관이라, 한 곳씩 담게 하면
- * 초기 등록 피로도가 커진다. 그래서 체크박스로 여러 곳을 고른 뒤 한 번에 담는다.
+ * 하트를 누르면 그 자리에서 담기고, 다시 누르면 빠진다. 고른 뒤 확인하는
+ * 단계가 없어서 여러 곳을 연달아 담기 좋다 — PRD ④ 가 다중선택을 넣은 이유가
+ * "하나하나 넣기 귀찮다" 였는데, 확인 단계를 없애는 쪽이 그 목적에 더 맞는다.
  *
- * 익명 계정은 여기서 처음 발급된다 — 담기를 눌러야 계정이 생긴다.
- * 그냥 둘러보고 떠나는 방문자까지 계정을 만들면 빈 계정만 쌓인다.
+ * 익명 계정은 처음 담을 때 발급된다. 그냥 둘러보고 떠나는 방문자까지
+ * 계정을 만들면 빈 계정만 쌓인다.
  */
 export function SearchResultList({
   places,
@@ -25,11 +26,8 @@ export function SearchResultList({
   places: PlaceSearchResult[]
   initialSavedIds: string[]
 }) {
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [savedIds, setSavedIds] = useState<Set<string>>(
-    new Set(initialSavedIds),
-  )
-  const [saving, setSaving] = useState(false)
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set(initialSavedIds))
+  const [savingId, setSavingId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,45 +39,53 @@ export function SearchResultList({
   const geo = useGeolocation()
   const coords = geo.status === 'granted' ? geo.coords : null
 
-  function toggle(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+  function showToast(message: string) {
+    setToast(message)
+    setTimeout(() => setToast(null), 2400)
   }
 
-  async function handleSave() {
-    const ids = [...selected]
-    if (ids.length === 0) return
-
-    setSaving(true)
+  async function handleToggle(place: PlaceSearchResult) {
+    const isSaved = savedIds.has(place.id)
+    setSavingId(place.id)
     setError(null)
+
     try {
-      const userId = await ensureAnonymousUser()
       const supabase = createClient()
 
-      // upsert + ignoreDuplicates: 화면에서 이미 막고 있지만, 두 탭에서 동시에
-      // 담는 경우처럼 UI 를 통과한 중복이 오면 (user_id, place_id) UNIQUE 가
-      // 에러를 낸다. 중복은 "이미 담긴 것"이므로 조용히 넘어가는 게 맞다.
-      const { error: insertError } = await supabase
-        .from('user_favorite')
-        .upsert(
-          ids.map((place_id) => ({ user_id: userId, place_id })),
-          { onConflict: 'user_id,place_id', ignoreDuplicates: true },
-        )
+      if (isSaved) {
+        // RLS 가 본인 행으로 제한하므로 user_id 조건을 따로 걸지 않아도 안전하다
+        const { error: deleteError } = await supabase
+          .from('user_favorite')
+          .delete()
+          .eq('place_id', place.id)
+        if (deleteError) throw new Error(deleteError.message)
 
-      if (insertError) throw new Error(insertError.message)
+        setSavedIds((prev) => {
+          const next = new Set(prev)
+          next.delete(place.id)
+          return next
+        })
+        showToast(`${place.name}을(를) 뺐어요`)
+      } else {
+        const userId = await ensureAnonymousUser()
+        // 두 탭에서 동시에 담는 경우처럼 UI 를 통과한 중복이 오면
+        // (user_id, place_id) UNIQUE 가 에러를 낸다. 중복은 "이미 담긴 것"이므로
+        // 조용히 넘어가는 게 맞다.
+        const { error: insertError } = await supabase
+          .from('user_favorite')
+          .upsert(
+            { user_id: userId, place_id: place.id },
+            { onConflict: 'user_id,place_id', ignoreDuplicates: true },
+          )
+        if (insertError) throw new Error(insertError.message)
 
-      setSavedIds((prev) => new Set([...prev, ...ids]))
-      setSelected(new Set())
-      setToast(`${ids.length}곳을 관심 장소에 담았어요`)
-      setTimeout(() => setToast(null), 2600)
+        setSavedIds((prev) => new Set(prev).add(place.id))
+        showToast(`${place.name}을(를) 담았어요`)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
-      setSaving(false)
+      setSavingId(null)
     }
   }
 
@@ -94,9 +100,9 @@ export function SearchResultList({
           >
             <SearchResultCard
               place={place}
-              selected={selected.has(place.id)}
-              alreadySaved={savedIds.has(place.id)}
-              onToggle={() => toggle(place.id)}
+              saved={savedIds.has(place.id)}
+              saving={savingId === place.id}
+              onToggleSave={() => handleToggle(place)}
               coords={coords}
             />
           </li>
@@ -109,36 +115,6 @@ export function SearchResultList({
         </p>
       )}
 
-      {/* 하단 고정 담기 바 — 고른 게 있을 때만 나타난다 */}
-      {selected.size > 0 && (
-        <div className="pointer-events-none sticky bottom-0 z-30 px-4 pb-4">
-          <div className="bg-card zin pointer-events-auto flex items-center gap-2.5 rounded-md p-3 shadow-[0_10px_34px_rgb(27_48_34_/_0.18)]">
-            <button
-              type="button"
-              onClick={() => setSelected(new Set())}
-              aria-label="선택 해제"
-              className="text-body hover:border-terra hover:text-terra-link flex size-10 flex-none items-center justify-center rounded-[11px] border border-[rgb(27_48_34_/_0.12)] transition-colors"
-            >
-              <Icon name="close" size={19} />
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="font-display bg-terra hover:bg-terra-link flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xs text-base font-bold text-white transition-colors disabled:opacity-60"
-            >
-              <Icon
-                name={saving ? 'progress_activity' : 'favorite'}
-                size={19}
-                filled={!saving}
-                className={saving ? 'animate-spin' : ''}
-              />
-              {saving ? '담는 중…' : `선택한 ${selected.size}곳 담기`}
-            </button>
-          </div>
-        </div>
-      )}
-
       {toast && (
         <div
           role="status"
@@ -146,7 +122,6 @@ export function SearchResultList({
         >
           <Icon name="check_circle" size={20} filled className="text-calm" />
           <span className="flex-1">{toast}</span>
-          {/* 담자마자 확인하러 갈 수 있게 — 관심 장소함으로 가는 유일한 통로다 */}
           <Link
             href="/favorites"
             className="font-display text-calm flex-none text-ui font-bold underline underline-offset-2"
