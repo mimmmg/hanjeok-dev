@@ -30,6 +30,8 @@ export const ICON_NAMES = [
   'fingerprint',
   'info',
   'list',
+  'map',
+  'navigation',
   'progress_activity',
   'search',
   'sensors',

@@ -126,9 +126,7 @@ export default async function AlternativesPage({
             {base.district ?? '서울'} · {TRAVEL_MODE_LABEL[mode]} 기준
           </p>
           <h2 className="font-display mt-2 text-title font-bold tracking-[-0.01em]">
-            {isCrowded
-              ? `${base.name} 대신 가볼 만한 곳`
-              : `${base.name} 근처 가볼 만한 곳`}
+{base.name} 근처 가볼 만한 곳
           </h2>
           <p className="text-body mt-2 text-label leading-relaxed">
             {basePct !== null &&

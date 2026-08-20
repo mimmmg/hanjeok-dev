@@ -4,6 +4,7 @@ import { CongestionChart } from '@/components/CongestionChart'
 import { CongestionGauge } from '@/components/CongestionGauge'
 import { DeviceFrame } from '@/components/DeviceFrame'
 import { DistanceFromMe } from '@/components/DistanceFromMe'
+import { FavoriteHeart } from '@/components/FavoriteHeart'
 import { Icon } from '@/components/Icon'
 import { PlaceDetailActions } from '@/components/PlaceDetailActions'
 import type { HourSlot } from '@/types/forecast'
@@ -12,7 +13,7 @@ import {
   CONGESTION_STYLE,
   congestionLevel,
 } from '@/utils/congestionLevel'
-import { kakaoDirectionsUrl } from '@/utils/mapLink'
+import { mapProviders } from '@/utils/mapLink'
 import { seoulHour, seoulToday } from '@/utils/seoulTime'
 import { createClient } from '@/utils/supabase/server'
 
@@ -105,8 +106,8 @@ export default async function PlaceDetailPage({
 
   const isStale = forecastDate !== null && forecastDate !== today
 
-  // 좌표가 있으면 좌표로, 없으면 주소로 길찾기를 연다
-  const mapUrl = kakaoDirectionsUrl({
+  // 좌표가 있으면 좌표로, 없으면 이름·주소 검색으로 길찾기를 연다
+  const providers = mapProviders({
     name: place.name,
     lat: place.lat,
     lng: place.lng,
@@ -118,7 +119,7 @@ export default async function PlaceDetailPage({
       <div className="flex flex-col gap-4 px-6 pt-6 pb-10">
         {/* ── 현재 혼잡도 ── */}
         <section className="bg-card border-line zin rounded-lg border p-4">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h2 className="font-display truncate text-title font-bold tracking-[-0.01em]">
                 {place.name}
@@ -136,6 +137,13 @@ export default async function PlaceDetailPage({
                 />
               </p>
             </div>
+
+            {/* 담김 여부를 문장이 아니라 하트의 채움으로 보여준다 */}
+            <FavoriteHeart
+              placeId={place.id}
+              placeName={place.name}
+              initialSaved={Boolean(favorite)}
+            />
           </div>
 
           {currentPct === null || level === null ? (
@@ -197,7 +205,6 @@ export default async function PlaceDetailPage({
             placeId={place.id}
             placeName={place.name}
             currentPct={currentPct}
-            initiallySaved={Boolean(favorite)}
           />
         </div>
 
@@ -222,16 +229,27 @@ export default async function PlaceDetailPage({
             )}
           </dl>
 
-          {mapUrl && (
-            <a
-              href={mapUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="font-display bg-ink text-screen mt-4 flex min-h-tap items-center justify-center gap-2 rounded-full text-ui font-bold transition-colors hover:bg-[#132218]"
-            >
-              <Icon name="directions" size={19} />
-              카카오맵으로 길찾기
-            </a>
+          {providers.length > 0 && (
+            <div className="mt-4">
+              <p className="font-display text-muted mb-2 text-caption font-semibold tracking-[0.08em] uppercase">
+                길찾기
+              </p>
+              {/* 사람마다 쓰는 지도 앱이 달라 나란히 둔다 */}
+              <div className="flex gap-2">
+                {providers.map((provider) => (
+                  <a
+                    key={provider.key}
+                    href={provider.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-display text-ink border-line-3 hover:border-muted flex min-h-tap flex-1 items-center justify-center gap-1.5 rounded-full border text-label font-semibold transition-colors"
+                  >
+                    <Icon name={provider.icon} size={18} />
+                    {provider.label}
+                  </a>
+                ))}
+              </div>
+            </div>
           )}
         </section>
       </div>

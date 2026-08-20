@@ -9,68 +9,40 @@ import {
   type TravelMode,
 } from '@/types/travel'
 import { CONGESTION_THRESHOLDS } from '@/utils/congestionLevel'
-import { createClient } from '@/utils/supabase/client'
-import { ensureAnonymousUser } from '@/utils/supabase/ensureAnonymousUser'
 
 /**
- * 상세 화면의 조작부 — 도보/차 토글, 담기, 대안 보기.
+ * 상세 화면의 조작부 — 도보/차 토글과 근처 장소 보기.
  *
- * 셋을 한 컴포넌트에 둔 이유: 도보/차 상태를 "대안 보기" 링크가 함께 써야 한다.
+ * 둘을 한 컴포넌트에 둔 이유: 도보/차 상태를 링크가 함께 써야 한다.
  * 상태를 위로 끌어올리면 상세 화면 전체가 클라이언트 컴포넌트가 되어
  * 서버에서 하던 조회까지 브라우저로 내려간다.
+ *
+ * 담기는 여기 없다. 장소 이름 옆 하트(FavoriteHeart)가 맡는다 —
+ * 상태 표시와 조작이 한 자리에 있는 편이 낫고, 버튼 하나가 줄어든다.
  */
 export function PlaceDetailActions({
   placeId,
   placeName,
   currentPct,
-  initiallySaved,
 }: {
   placeId: string
   placeName: string
   /** 현재 시간대 혼잡 지수. null 이면 예측치가 없다 */
   currentPct: number | null
-  initiallySaved: boolean
 }) {
   const [mode, setMode] = useState<TravelMode>('walk')
-  const [saved, setSaved] = useState(initiallySaved)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   /*
-   * 근처 장소를 보여주는 버튼은 항상 둔다. 다만 성격이 갈린다:
+   * 근처 장소 버튼은 항상 둔다. 문구도 하나로 고정한다 —
+   * 버튼 이름이 상황에 따라 바뀌면 처음 쓸 때 헷갈린다.
    *
-   * - 혼잡할 때(70↑): "한적한 대안" — 지금 문제를 해결하는 행동이라
-   *   테라코타로 강조하고 왜 필요한지 안내 문구도 함께 띄운다.
-   * - 여유로울 때: "근처 둘러보기" — 문제 해결이 아니라 탐색이므로
-   *   선만 두른 약한 버튼으로 둔다.
-   *
-   * PRD ⑤ 의 "혼잡 시 분기"는 강조의 차이로 지킨다. 한적한데도 대안을
-   * 들이미는 건 방해지만, 근처에 뭐가 있는지 궁금한 건 늘 유효한 질문이다.
+   * PRD ⑤ 의 "혼잡 시 분기"는 강조의 차이로 지킨다. 붐빌 때는 진한 버튼과
+   * 안내 문구까지 붙고, 여유로울 때는 선만 두른 약한 버튼이다.
+   * 한적한데도 대안을 들이미는 건 방해지만, 근처에 뭐가 있는지 궁금한 건
+   * 늘 유효한 질문이다.
    */
   const isCrowded =
     currentPct !== null && currentPct >= CONGESTION_THRESHOLDS.busy
-
-  async function handleSave() {
-    if (saved) return
-    setSaving(true)
-    setError(null)
-    try {
-      const userId = await ensureAnonymousUser()
-      const supabase = createClient()
-      const { error: saveError } = await supabase
-        .from('user_favorite')
-        .upsert(
-          { user_id: userId, place_id: placeId },
-          { onConflict: 'user_id,place_id', ignoreDuplicates: true },
-        )
-      if (saveError) throw new Error(saveError.message)
-      setSaved(true)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setSaving(false)
-    }
-  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -101,44 +73,22 @@ export function PlaceDetailActions({
         </div>
         <p className="text-muted mt-2 text-caption leading-relaxed">
           {mode === 'walk'
-            ? '걸어서 갈 수 있는 가까운 곳 위주로 대안을 찾습니다.'
-            : '조금 멀어도 한적한 곳 위주로 대안을 찾습니다.'}
+            ? '걸어서 갈 수 있는 가까운 곳 위주로 찾습니다.'
+            : '조금 멀어도 한적한 곳 위주로 찾습니다.'}
         </p>
       </div>
 
-      {/* ── 담기 · 대안 보기 ── */}
-      <div className="flex flex-col gap-2.5">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saved || saving}
-          className={`font-display flex min-h-14 items-center justify-center gap-2 rounded-full px-5 text-base font-bold transition-colors ${
-            saved
-              ? 'border-terra-bd bg-terra-tint text-terra-dark cursor-default border'
-              : 'bg-terra hover:bg-terra-link text-white disabled:opacity-60'
-          }`}
-        >
-          <Icon
-            name={saving ? 'progress_activity' : saved ? 'check' : 'favorite'}
-            size={20}
-            filled={!saving && !saved}
-            className={saving ? 'animate-spin' : ''}
-          />
-          {saving ? '담는 중…' : saved ? '관심 장소함에 있음' : '관심 장소에 담기'}
-        </button>
-
-        <Link
-          href={`/place/${placeId}/alternatives?mode=${mode}`}
-          className={`font-display flex min-h-14 items-center justify-center gap-2 rounded-full px-5 text-base font-bold transition-colors ${
-            isCrowded
-              ? 'bg-ink text-screen hover:bg-[#132218]'
-              : 'text-ink border border-[rgb(27_48_34_/_0.14)] hover:bg-[rgb(27_48_34_/_0.04)]'
-          }`}
-        >
-          <Icon name="compare_arrows" size={20} />
-          {isCrowded ? '한적한 대안 보기' : '근처 둘러보기'}
-        </Link>
-      </div>
+      <Link
+        href={`/place/${placeId}/alternatives?mode=${mode}`}
+        className={`font-display flex min-h-14 items-center justify-center gap-2 rounded-full px-5 text-base font-bold transition-colors ${
+          isCrowded
+            ? 'bg-ink text-screen hover:bg-[#132218]'
+            : 'text-ink border border-[rgb(27_48_34_/_0.14)] hover:bg-[rgb(27_48_34_/_0.04)]'
+        }`}
+      >
+        <Icon name="compare_arrows" size={20} />
+        근처 가볼 만한 곳
+      </Link>
 
       {isCrowded && (
         <p className="bg-calm-tint text-calm-fg flex items-start gap-2 rounded-xs border border-[rgb(170_166_72_/_0.34)] p-3 text-caption leading-relaxed">
@@ -147,12 +97,6 @@ export function PlaceDetailActions({
             지금 {placeName}은(는) 붐빕니다. 비슷한 분위기의 한적한 곳을 나란히
             비교해 보세요.
           </span>
-        </p>
-      )}
-
-      {error && (
-        <p className="bg-busy-tint text-busy-fg rounded-xs p-3 text-ui">
-          담기에 실패했습니다: {error}
         </p>
       )}
     </div>
