@@ -68,7 +68,7 @@ export default async function AlternativesPage({
   const { data: candidates } = await supabase
     .from('place')
     .select(
-      'id, name, category, access_desc, fee, lat, lng, congestion_forecast(congestion_pct, forecast_date)',
+      'id, name, category, access_desc, lat, lng, congestion_forecast(congestion_pct, forecast_date)',
     )
     .eq('district', base.district ?? '')
     .neq('id', id)
@@ -78,6 +78,15 @@ export default async function AlternativesPage({
       ascending: false,
     })
     .limit(1, { referencedTable: 'congestion_forecast' })
+
+  /*
+   * 이미 담은 장소. RLS 가 auth.uid() = user_id 로 제한하므로
+   * 익명 세션이 없으면 빈 배열이 온다 (에러가 아니다).
+   */
+  const { data: favorites } = await supabase
+    .from('user_favorite')
+    .select('place_id')
+  const savedIds = new Set((favorites ?? []).map((f) => f.place_id))
 
   const alternatives = (candidates ?? [])
     .map((c): Alternative | null => {
@@ -103,10 +112,9 @@ export default async function AlternativesPage({
         id: c.id,
         name: c.name,
         category: c.category,
-        accessDesc: c.access_desc,
-        fee: c.fee,
         congestionPct,
         distanceKm: km,
+        saved: savedIds.has(c.id),
         score: scoreAlternative({
           congestionPct,
           distanceKm: km,

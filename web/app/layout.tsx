@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import ReactDOM from "react-dom";
 import { Manrope, Hanken_Grotesk } from "next/font/google";
 import { ICON_FONT_URL } from "@/utils/icons";
 import "./globals.css";
@@ -39,6 +40,12 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  // 아이콘 서체가 gstatic 에서 오므로 연결을 미리 열어둔다.
+  // <link rel="preconnect"> 를 직접 쓰면 <html> 의 자식이 되어
+  // "link cannot be a child of html" 경고가 난다. 이 API 는 React 가
+  // 알아서 head 로 올려준다.
+  ReactDOM.preconnect("https://fonts.gstatic.com", { crossOrigin: "anonymous" });
+
   return (
     <html
       lang="ko"
@@ -48,9 +55,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
        * 아이콘 서체는 CSS @import 로 넣을 수 없다 — Next.js 가
        * fonts.googleapis.com 의 @import 를 제거한다. link 로 실어야 한다.
        * 쓰는 아이콘만 서브셋해서 받는다 (utils/icons.ts).
+       *
+       * precedence 를 주는 이유: 이 link 는 JSX 상 <html> 의 자식인데,
+       * HTML 에서 <link> 는 <html> 의 자식이 될 수 없다. precedence 가 있으면
+       * React 가 이 스타일시트를 head 로 올려주고 순서도 관리한다.
+       * 없으면 "outside the main document without knowing its precedence"
+       * 경고와 하이드레이션 불일치가 함께 난다.
        */}
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      <link rel="stylesheet" href={ICON_FONT_URL} />
+      <link rel="stylesheet" href={ICON_FONT_URL} precedence="default" />
       <body className="min-h-full">{children}</body>
     </html>
   );

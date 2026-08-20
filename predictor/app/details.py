@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 
 from app.kto import TourApiClient
 from app.store import get_client, upsert_places
+from app.redact import redact
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ def run_detail_sync_job(*, limit: int | None = None) -> DetailResult:
                     content_id=content_id, content_type_id=14
                 )
         except Exception as exc:  # noqa: BLE001 — 한 곳이 실패해도 나머지는 간다
-            logger.warning("상세 조회 실패 (%s): %s", place["name"], exc)
+            logger.warning("상세 조회 실패 (%s): %s", place["name"], redact(exc))
             failed += 1
             continue
 

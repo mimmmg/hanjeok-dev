@@ -79,7 +79,7 @@ class JobResponse(BaseModel):
     places_scored: int
     rows_written: int
     used_mock_kto: bool
-    used_mock_weather: bool
+    weather_provider: str
     notes: list[str]
 
 
@@ -91,7 +91,7 @@ def health() -> dict[str, object]:
         "status": "ok",
         "service": "predictor",
         "mock_kto": settings.use_mock_kto,
-        "mock_weather": settings.use_mock_weather,
+        "weather_provider": settings.weather_provider,
         "can_write_db": settings.can_write_db,
     }
 
@@ -110,7 +110,7 @@ def trigger_forecast(dry_run: bool = False) -> JobResponse:
         places_scored=result.places_scored,
         rows_written=result.rows_written,
         used_mock_kto=result.used_mock_kto,
-        used_mock_weather=result.used_mock_weather,
+        weather_provider=result.weather_provider,
         notes=result.notes,
     )
 

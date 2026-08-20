@@ -31,6 +31,7 @@ from app.kto import (
 from app.landmarks import LANDMARKS
 from app.store import get_client, upsert_places
 from app.transform import clean_places
+from app.redact import redact
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,7 @@ def run_place_sync_job(*, dry_run: bool = False) -> SyncResult:
         try:
             rows = client.fetch_concentration(signgu_cd=signgu_cd)
         except Exception as exc:  # noqa: BLE001 — 한 구가 실패해도 나머지는 간다
-            logger.warning("집중률 조회 실패 (%s): %s", gu_name, exc)
+            logger.warning("집중률 조회 실패 (%s): %s", gu_name, redact(exc))
             notes.append(f"{gu_name} 집중률 조회 실패")
             continue
         for row in rows:

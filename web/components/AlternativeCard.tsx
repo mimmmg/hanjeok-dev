@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { CongestionGauge } from '@/components/CongestionGauge'
+import { FavoriteHeart } from '@/components/FavoriteHeart'
 import { Icon } from '@/components/Icon'
 import type { TravelMode } from '@/types/travel'
 import { TRAVEL_MODE_LABEL } from '@/types/travel'
@@ -16,11 +17,11 @@ export type Alternative = {
   id: string
   name: string
   category: string | null
-  accessDesc: string | null
-  fee: string | null
   congestionPct: number | null
   distanceKm: number
   score: ScoreBreakdown
+  /** 이미 관심 장소함에 있는지 */
+  saved: boolean
 }
 
 /**
@@ -58,7 +59,7 @@ export function AlternativeCard({
     >
       {/* 순위 머리 — 1순위만 올리브 배경으로 눈에 띄게 */}
       <div
-        className={`flex items-center gap-2 px-4 py-3 ${
+        className={`flex items-center gap-2 py-1 pr-2 pl-4 ${
           isBest ? 'bg-[rgb(170_166_72_/_0.14)]' : 'border-line border-b'
         }`}
       >
@@ -79,6 +80,18 @@ export function AlternativeCard({
         <span className="font-display tabular text-faint ml-auto text-caption">
           {alt.score.total}점
         </span>
+
+        {/*
+          비교하다 마음에 들면 그 자리에서 담을 수 있어야 한다.
+          순위 머리 오른쪽에 두면 이름·혼잡 지수 줄을 건드리지 않고,
+          다른 화면(검색 결과·상세)처럼 "카드 오른쪽 끝의 하트"로 일관된다.
+        */}
+        <FavoriteHeart
+          placeId={alt.id}
+          placeName={alt.name}
+          initialSaved={alt.saved}
+          size={20}
+        />
       </div>
 
       <div className="p-4">
@@ -117,34 +130,16 @@ export function AlternativeCard({
           </div>
         )}
 
-        {/* 판단 근거를 나란히 — 이 화면의 존재 이유 */}
-        <dl className="mt-4 flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-faint text-caption">이동</dt>
-            <dd className="text-ink text-label">
-              {formatDistance(alt.distanceKm)}
-              {alt.score.transitMinutes !== null &&
-                ` · 역에서 도보 ${alt.score.transitMinutes}분`}
-            </dd>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-faint text-caption">날씨</dt>
-            <dd className="text-muted flex items-center gap-1 text-label">
-              <Icon name="wb_sunny" size={15} />
-              연동 예정
-            </dd>
-          </div>
-          <div className="flex items-start justify-between gap-3">
-            <dt className="text-faint flex-none text-caption">접근성</dt>
-            <dd className="text-ink text-right text-label">
-              {alt.accessDesc ?? '정보 없음'}
-            </dd>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <dt className="text-faint text-caption">입장료</dt>
-            <dd className="text-ink text-label">{alt.fee ?? '정보 없음'}</dd>
-          </div>
-        </dl>
+        {/*
+          기본정보(날씨·접근성·입장료)는 상세 화면에만 둔다.
+          카드마다 네 줄씩 붙으면 다섯 곳을 견주기 어렵다 — 비교 화면은
+          "무엇이 다른가"만 보여야 한다. 거리는 이동 부담을 가르는 값이라 남긴다.
+        */}
+        <p className="text-faint mt-3 text-caption">
+          {formatDistance(alt.distanceKm)}
+          {alt.score.transitMinutes !== null &&
+            ` · 역에서 도보 ${alt.score.transitMinutes}분`}
+        </p>
 
         {/* 왜 이 점수인지 — 추천을 검산할 수 있게 */}
         <p className="text-faint border-line mt-3 border-t pt-3 text-micro leading-relaxed">

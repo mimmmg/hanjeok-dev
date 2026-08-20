@@ -21,6 +21,7 @@ from app.restdays import is_closed_on
 from app.scoring import HourForecast, score_from_concentration
 from app.store import fetch_places, get_client, upsert_many
 from app.weather import fetch_hourly_safe, get_weather_source
+from app.redact import redact
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,8 @@ class JobResult:
     places_scored: int
     rows_written: int
     used_mock_kto: bool
-    used_mock_weather: bool
+    # 어느 날씨 제공자를 실제로 썼는지. 불리언 하나로는 셋을 구분할 수 없다.
+    weather_provider: str
     notes: list[str] = field(default_factory=list)
 
 
@@ -65,17 +67,17 @@ def run_forecast_job(*, dry_run: bool = False) -> JobResult:
 
     if settings.use_mock_kto:
         notes.append("KTO_API_KEY 가 없어 집중률을 받을 수 없습니다.")
-        return JobResult(today, 0, 0, True, settings.use_mock_weather, notes)
+        return JobResult(today, 0, 0, True, settings.weather_provider, notes)
 
     if not settings.can_write_db:
         notes.append("Supabase 키가 없어 저장을 건너뜁니다.")
-        return JobResult(today, 0, 0, False, settings.use_mock_weather, notes)
+        return JobResult(today, 0, 0, False, settings.weather_provider, notes)
 
     client = get_client()
     db_places = fetch_places(client)
     if not db_places:
         notes.append("place 테이블이 비어 있습니다. 먼저 장소 동기화를 돌리세요.")
-        return JobResult(today, 0, 0, False, settings.use_mock_weather, notes)
+        return JobResult(today, 0, 0, False, settings.weather_provider, notes)
 
     # 이름 → DB 행. 집중률 API 도 KTO 라 관광지명 표기가 같다.
     place_by_name = {row["name"]: row for row in db_places}
@@ -89,7 +91,7 @@ def run_forecast_job(*, dry_run: bool = False) -> JobResult:
         try:
             rows = kto.fetch_concentration(signgu_cd=signgu_cd)
         except Exception as exc:  # noqa: BLE001 — 한 구가 실패해도 나머지는 간다
-            logger.warning("집중률 조회 실패 (%s): %s", gu_name, exc)
+            logger.warning("집중률 조회 실패 (%s): %s", gu_name, redact(exc))
             notes.append(f"{gu_name} 집중률 조회 실패")
             continue
 
@@ -108,14 +110,18 @@ def run_forecast_job(*, dry_run: bool = False) -> JobResult:
 
     if not rates:
         notes.append("집중률과 이름이 맞는 장소가 없습니다.")
-        return JobResult(today, 0, 0, False, settings.use_mock_weather, notes)
+        return JobResult(today, 0, 0, False, settings.weather_provider, notes)
 
     # ── 2. 날씨 (하루 한 번, 서울 대표 지점) ──
     hourly, weather_error = fetch_hourly_safe(
         get_weather_source(), lat=SEOUL_CENTER_LAT, lng=SEOUL_CENTER_LNG
     )
+    weather_used = settings.weather_provider
     if weather_error:
-        notes.append(f"날씨 조회 실패로 mock 을 썼습니다: {weather_error}")
+        notes.append(f"날씨: {weather_error}")
+        weather_used = "open-meteo" if "Open-Meteo" in weather_error else "mock"
+    else:
+        notes.append(f"날씨: {weather_used} 사용")
 
     # ── 3. 시간대 분해 후 저장 ──
     target_days = [today + timedelta(days=offset) for offset in range(FORECAST_DAYS)]
@@ -170,6 +176,6 @@ def run_forecast_job(*, dry_run: bool = False) -> JobResult:
         places_scored=scored_places,
         rows_written=written,
         used_mock_kto=False,
-        used_mock_weather=settings.use_mock_weather,
+        weather_provider=weather_used,
         notes=notes,
     )

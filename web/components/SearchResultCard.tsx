@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { CongestionGauge } from '@/components/CongestionGauge'
 import { DistanceFromMe } from '@/components/DistanceFromMe'
-import { Icon } from '@/components/Icon'
+import { FavoriteHeart } from '@/components/FavoriteHeart'
 import type { Coords } from '@/hooks/useGeolocation'
 import type { PlaceSearchResult } from '@/types/place'
 import {
@@ -26,14 +26,11 @@ import {
 export function SearchResultCard({
   place,
   saved,
-  saving,
-  onToggleSave,
   coords,
 }: {
   place: PlaceSearchResult
+  /** 서버에서 조회한 담김 여부. 이후 상태는 하트가 스스로 관리한다 */
   saved: boolean
-  saving: boolean
-  onToggleSave: () => void
   /** 목록에서 한 번만 받아 내려준 사용자 좌표. 없으면 거리 표시가 빠진다 */
   coords: Coords | null
 }) {
@@ -85,28 +82,14 @@ export function SearchResultCard({
         )}
       </div>
 
-      {/* 하트 — 누르면 바로 담기고, 다시 누르면 빠진다 */}
-      <button
-        type="button"
-        onClick={onToggleSave}
-        disabled={saving}
-        aria-pressed={saved}
-        aria-label={`${place.name} ${saved ? '관심 장소에서 빼기' : '관심 장소에 담기'}`}
-        className="flex size-tap flex-none items-center justify-center rounded-full transition-colors hover:bg-[rgb(27_48_34_/_0.05)] disabled:opacity-50"
-      >
-        <Icon
-          name={saving ? 'progress_activity' : 'favorite'}
-          size={24}
-          filled={saved}
-          className={
-            saving
-              ? 'text-muted animate-spin'
-              : saved
-                ? 'text-terra'
-                : 'text-faint'
-          }
-        />
-      </button>
+      {/* 하트 — 누르는 즉시 반영되고 저장은 뒤에서 한다 */}
+      <FavoriteHeart
+        placeId={place.id}
+        placeName={place.name}
+        initialSaved={saved}
+        size={24}
+      />
+
     </div>
   )
 }

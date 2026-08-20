@@ -34,7 +34,8 @@ class Settings:
     supabase_url: str | None
     supabase_secret_key: str | None
     kto_api_key: str | None
-    weather_api_key: str | None
+    kma_api_key: str | None
+    openweather_api_key: str | None
 
     @property
     def can_write_db(self) -> bool:
@@ -47,8 +48,19 @@ class Settings:
         return not self.kto_api_key
 
     @property
-    def use_mock_weather(self) -> bool:
-        return not self.weather_api_key
+    def weather_provider(self) -> str:
+        """
+        어느 날씨 제공자를 쓸지. 채워진 키를 위에서부터 고른다.
+
+        키가 하나도 없어도 mock 으로 떨어지지 않는다 — Open-Meteo 는
+        키가 필요 없어서 언제나 실제 예보를 받을 수 있다.
+        mock 은 네트워크가 아예 안 될 때의 마지막 수단이다.
+        """
+        if self.kma_api_key:
+            return "kma"
+        if self.openweather_api_key:
+            return "openweather"
+        return "open-meteo"
 
 
 def load_settings() -> Settings:
@@ -60,7 +72,11 @@ def load_settings() -> Settings:
             or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
         ),
         kto_api_key=os.getenv("KTO_API_KEY"),
-        weather_api_key=os.getenv("WEATHER_API_KEY"),
+        # 날씨 키는 제공자별로 이름을 나눈다. 한때 WEATHER_API_KEY 하나로
+        # 두었다가, OpenWeatherMap 키를 기상청으로 호출해 403 을 받는 사고가
+        # 있었다. 이름이 애매하면 값이 어느 서비스 것인지 알 수 없다.
+        kma_api_key=os.getenv("KMA_API_KEY"),
+        openweather_api_key=os.getenv("OPENWEATHER_API_KEY"),
     )
 
 

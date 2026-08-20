@@ -1,6 +1,5 @@
-import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { Icon } from '@/components/Icon'
+import { BackButton } from '@/components/BackButton'
 import { TabBar } from '@/components/TabBar'
 
 /**
@@ -20,7 +19,11 @@ export function DeviceFrame({
   children,
 }: {
   title?: string
-  /** 넘기면 상단에 뒤로가기 버튼이 생긴다 */
+  /**
+   * 넘기면 상단에 뒤로가기 버튼이 생긴다.
+   * 값은 히스토리가 없을 때만 쓰는 대체 경로다 — 평소에는 브라우저
+   * 히스토리를 되짚어 실제로 왔던 화면으로 돌아간다.
+   */
   backHref?: string
   children: ReactNode
 }) {
@@ -43,13 +46,7 @@ export function DeviceFrame({
             "
           >
             {backHref ? (
-              <Link
-                href={backHref}
-                aria-label="뒤로"
-                className="text-ink flex size-tap flex-none items-center justify-center rounded-full transition-colors hover:bg-[rgb(27_48_34_/_0.05)]"
-              >
-                <Icon name="arrow_back" size={22} />
-              </Link>
+              <BackButton fallbackHref={backHref} />
             ) : (
               <span className="w-2 flex-none" />
             )}

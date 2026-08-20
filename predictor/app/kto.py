@@ -26,6 +26,7 @@ from app.config import (
     KTO_CONTENT_TYPE_TOURIST_SPOT,
     settings,
 )
+from app.redact import redact
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +112,7 @@ class TourApiClient:
         body = payload.get("response", {}).get("body", {})
         items = body.get("items")
         if not items:
-            logger.warning("TourAPI %s 응답에 items 없음: %s", path, body)
+            logger.warning("TourAPI %s 응답에 items 없음: %s", path, redact(body))
             return []
         return items.get("item", [])
 
