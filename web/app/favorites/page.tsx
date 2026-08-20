@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { DeviceFrame } from '@/components/DeviceFrame'
 import { FavoritesView } from '@/components/FavoritesView'
 import type { FavoritePlace } from '@/types/favorite'
-import { seoulHour } from '@/utils/seoulTime'
+import { seoulHour, seoulToday } from '@/utils/seoulTime'
 import { createClient } from '@/utils/supabase/server'
 
 export const metadata: Metadata = { title: '관심 장소함 — 한적' }
@@ -21,6 +21,8 @@ export const metadata: Metadata = { title: '관심 장소함 — 한적' }
 export default async function FavoritesPage() {
   const supabase = await createClient()
   const hour = seoulHour()
+  // 배치가 7일치를 미리 쓰므로 오늘 상한이 없으면 미래 날짜가 뽑힌다
+  const today = seoulToday()
 
   // ① 담아둔 place_id 목록 (RLS 가 본인 것만 준다)
   const { data: rows } = await supabase
@@ -40,6 +42,7 @@ export default async function FavoritesPage() {
         )
         .in('id', placeIds)
         .eq('congestion_forecast.hour_slot', hour)
+        .lte('congestion_forecast.forecast_date', today)
         .order('forecast_date', {
           referencedTable: 'congestion_forecast',
           ascending: false,
