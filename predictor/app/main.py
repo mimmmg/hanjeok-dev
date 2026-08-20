@@ -65,6 +65,18 @@ class Forecast(BaseModel):
     """실제 KTO 데이터인지 mock 인지. UI 의 '예측치' 표기 판단 근거"""
 
 
+class WeatherHour(BaseModel):
+    hour_slot: int
+    temperature: float
+    precipitation_prob: int
+
+
+class WeatherResponse(BaseModel):
+    provider: str
+    """실제로 값을 받아온 제공자. 대체됐으면 그 사실이 드러난다"""
+    hours: list[WeatherHour]
+
+
 class SyncResponse(BaseModel):
     concentration_places: int
     tour_places: int
@@ -94,6 +106,38 @@ def health() -> dict[str, object]:
         "weather_provider": settings.weather_provider,
         "can_write_db": settings.can_write_db,
     }
+
+
+@app.get("/weather", response_model=WeatherResponse)
+def get_weather() -> WeatherResponse:
+    """
+    서울 기준 오늘 시간대별 날씨.
+
+    화면에 표시할 날씨를 여기서 받아가게 하는 이유: 예측 점수를 계산할 때 쓴
+    것과 같은 값을 보여주기 위함이다. 화면이 다른 소스를 쓰면 "25도라고 써놓고
+    24도로 계산된" 어긋남이 생긴다.
+
+    장소별로 나누지 않는다. 서비스 지역이 서울 한 도시라 구별 예보를 따로
+    받을 실익이 없고, 673곳마다 부르면 같은 응답을 673번 받게 된다.
+    """
+    hourly, error = fetch_hourly_safe(
+        get_weather_source(), lat=SEOUL_CENTER_LAT, lng=SEOUL_CENTER_LNG
+    )
+    provider = settings.weather_provider
+    if error:
+        provider = "open-meteo" if "Open-Meteo" in error else "mock"
+
+    return WeatherResponse(
+        provider=provider,
+        hours=[
+            WeatherHour(
+                hour_slot=h.hour_slot,
+                temperature=h.temperature,
+                precipitation_prob=h.precipitation_prob,
+            )
+            for h in hourly
+        ],
+    )
 
 
 @app.post("/jobs/forecast", response_model=JobResponse)

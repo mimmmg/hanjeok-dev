@@ -15,6 +15,7 @@ import {
 } from '@/utils/congestionLevel'
 import { mapProviders } from '@/utils/mapLink'
 import { seoulHour, seoulToday } from '@/utils/seoulTime'
+import { fetchSeoulWeather } from '@/utils/weather'
 import { createClient } from '@/utils/supabase/server'
 
 export async function generateMetadata({
@@ -104,6 +105,9 @@ export default async function PlaceDetailPage({
     .eq('place_id', id)
     .maybeSingle()
 
+  // 서울 한 지점 기준. 점수 계산에 쓴 것과 같은 값을 보여준다.
+  const weather = await fetchSeoulWeather()
+
   const isStale = forecastDate !== null && forecastDate !== today
 
   // 좌표가 있으면 좌표로, 없으면 이름·주소 검색으로 길찾기를 연다
@@ -171,6 +175,20 @@ export default async function PlaceDetailPage({
               <div className="mt-3">
                 <CongestionGauge pct={currentPct} />
               </div>
+
+              {/*
+                날씨는 이 숫자가 왜 이렇게 나왔는지의 근거 중 하나다.
+                예보는 서울 한 지점 기준이라 "이 장소의 날씨"가 아니라
+                "서울"이라고 적어야 정확하다.
+              */}
+              {weather && (
+                <p className="text-muted border-line mt-3 flex items-center gap-1.5 border-t pt-3 text-caption">
+                  <Icon name="wb_sunny" size={15} />
+                  서울 {Math.round(weather.temperature)}°C · 강수{' '}
+                  {weather.precipitationProb}%
+                  <span className="text-faint">예보</span>
+                </p>
+              )}
             </>
           )}
         </section>
