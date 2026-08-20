@@ -5,11 +5,13 @@ import {
   AlternativeCard,
   type Alternative,
 } from '@/components/AlternativeCard'
+import { AlternativeSortToggle } from '@/components/AlternativeSortToggle'
 import { DeviceFrame } from '@/components/DeviceFrame'
 import { Icon } from '@/components/Icon'
 import { TravelModeToggle } from '@/components/TravelModeToggle'
+import { toAlternativeSort } from '@/types/alternativeSort'
 import { toTravelMode } from '@/types/travel'
-import { scoreAlternative } from '@/utils/alternativeScore'
+import { parseWalkMinutes, scoreAlternative } from '@/utils/alternativeScore'
 import { CONGESTION_THRESHOLDS } from '@/utils/congestionLevel'
 import { distanceKm } from '@/utils/distance'
 import { seoulHour, seoulToday } from '@/utils/seoulTime'
@@ -25,11 +27,12 @@ export default async function AlternativesPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ mode?: string }>
+  searchParams: Promise<{ mode?: string; sort?: string }>
 }) {
   const { id } = await params
-  const { mode: rawMode } = await searchParams
+  const { mode: rawMode, sort: rawSort } = await searchParams
   const mode = toTravelMode(rawMode)
+  const sort = toAlternativeSort(rawSort)
 
   const supabase = await createClient()
   const hour = seoulHour()
@@ -93,8 +96,19 @@ export default async function AlternativesPage({
     .select('place_id')
   const savedIds = new Set((favorites ?? []).map((f) => f.place_id))
 
-  const alternatives = (candidates ?? [])
-    .map((c): Alternative | null => {
+  /*
+   * ── 선별과 정렬을 나눈다 ──
+   *
+   * 선별(어느 다섯 곳을 보여줄지)은 가중합 점수로 한다. 화면에는 안 보이는
+   * 계산이다. 선별까지 사용자가 고른 정렬 기준으로 하면 토글이 망가진다 —
+   * 한적한순으로 다섯 곳을 뽑으면 전부 멀어질 수 있고, 그 상태에서
+   * 가까운순을 눌러도 "먼 것들 중에 가까운 순"이 된다.
+   *
+   * 정렬(그 다섯 곳을 어떻게 줄 세울지)은 화면에 보이는 값으로만 한다.
+   * 그래야 사용자가 카드의 숫자를 보고 순서가 맞는지 확인할 수 있다.
+   */
+  const scored = (candidates ?? [])
+    .map((c) => {
       const congestionPct = c.congestion_forecast[0]?.congestion_pct ?? null
 
       // 좌표가 없으면 거리를 알 수 없다. 0 으로 두면 "바로 옆"으로 오인되므로
@@ -113,30 +127,53 @@ export default async function AlternativesPage({
         { lat: c.lat, lng: c.lng },
       )
 
-      return {
+      const alternative: Alternative = {
         id: c.id,
         name: c.name,
         category: c.category,
         congestionPct,
         distanceKm: km,
+        transitMinutes: parseWalkMinutes(c.access_desc),
         saved: savedIds.has(c.id),
+      }
+
+      return {
+        alternative,
+        // 선별에만 쓰는 값. 화면으로 넘어가지 않는다.
         score: scoreAlternative({
           congestionPct,
           distanceKm: km,
           accessDesc: c.access_desc,
           mode,
-        }),
+        }).total,
       }
     })
-    .filter((a): a is Alternative => a !== null)
-    .sort((a, b) => b.score.total - a.score.total)
+    .filter((a): a is NonNullable<typeof a> => a !== null)
+
+  // ① 선별 — 점수 상위 다섯 곳
+  const picked = scored
+    .toSorted((a, b) => b.score - a.score)
     .slice(0, MAX_ALTERNATIVES)
+    .map((s) => s.alternative)
+
+  // ② 정렬 — 사용자가 고른 기준으로 그 다섯 곳을 다시 줄 세운다.
+  //    예측치가 없는 곳(congestionPct === null)은 판단 근거가 없으니 뒤로 보낸다.
+  const alternatives = picked.toSorted((a, b) =>
+    sort === 'calm'
+      ? (a.congestionPct ?? Infinity) - (b.congestionPct ?? Infinity)
+      : a.distanceKm - b.distanceKm,
+  )
 
   return (
     <DeviceFrame title="대안 비교" backHref={`/place/${id}`}>
       <div className="flex flex-col gap-4 px-6 pt-6 pb-10">
         <header className="zin">
-          {/* 제목 옆에 기준 토글을 붙인다 — 화면의 주된 조작이 아니라 옆단이다 */}
+          {/*
+            도보/차는 제목 옆에 둔다. 이 토글은 후보 '범위'(3km/15km)를 바꿔
+            목록 구성 자체를 갈아치우므로, 바로 아랫줄의 "도보 3km 안에서 N곳"
+            문구가 함께 반응하는 자리에 있어야 무엇이 바뀌는지 보인다.
+            순서를 바꾸는 정렬 토글은 리스트 바로 위에 따로 둔다.
+          */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="font-display text-muted text-caption font-semibold tracking-[0.08em] uppercase">
@@ -150,6 +187,7 @@ export default async function AlternativesPage({
             {alternatives.length > 0 && (
               <TravelModeToggle
                 current={mode}
+                sort={sort}
                 basePath={`/place/${id}/alternatives`}
               />
             )}
@@ -188,6 +226,15 @@ export default async function AlternativesPage({
           </div>
         ) : (
           <>
+            {/* 리스트를 지배하는 조작이라 리스트에 붙인다 */}
+            <div className="zin">
+              <AlternativeSortToggle
+                current={sort}
+                mode={mode}
+                basePath={`/place/${id}/alternatives`}
+              />
+            </div>
+
             <ul className="flex flex-col gap-3">
               {alternatives.map((alt, i) => (
                 <li
@@ -198,7 +245,7 @@ export default async function AlternativesPage({
                   <AlternativeCard
                     alternative={alt}
                     rank={i + 1}
-                    mode={mode}
+                    sort={sort}
                     baseName={base.name}
                     basePct={basePct}
                   />
@@ -206,10 +253,15 @@ export default async function AlternativesPage({
               ))}
             </ul>
 
+            {/*
+              CLAUDE.md §2 — 화면에 "예측치임"을 밝힌다. 실시간처럼 보이게
+              하지 않는다. 점수를 감췄으므로 여기서도 숫자를 들이대지 않고,
+              어떻게 골랐는지만 한 줄로 밝힌다.
+            */}
             <p className="text-faint bg-sunk rounded-xs p-3 text-caption leading-relaxed">
-              점수는 <strong>혼잡도 60% + 접근성 40%</strong>로 계산한 임시
-              값입니다. 날씨는 아직 반영되지 않았고, 정식 스코어링은 예측
-              서비스가 맡을 예정입니다.
+              이 다섯 곳은 <strong>혼잡도와 접근성을 함께 본 임시 계산</strong>
+              으로 고른 뒤, 위에서 고른 기준으로 줄 세운 것입니다. 혼잡도는
+              예측치이며, 정식 스코어링은 예측 서비스가 맡을 예정입니다.
             </p>
           </>
         )}
