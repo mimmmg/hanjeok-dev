@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { DeviceFrame } from '@/components/DeviceFrame'
 import { FavoritesView } from '@/components/FavoritesView'
 import type { FavoritePlace } from '@/types/favorite'
+import type { HourSlot } from '@/types/forecast'
+import { parseWalkMinutes } from '@/utils/alternativeScore'
 import { seoulHour, seoulToday } from '@/utils/seoulTime'
 import { createClient } from '@/utils/supabase/server'
 
@@ -33,34 +35,82 @@ export default async function FavoritesPage() {
   const addedAtById = new Map((rows ?? []).map((r) => [r.place_id, r.added_at]))
   const placeIds = [...addedAtById.keys()]
 
-  // ② 그 id 로 place + 현재 시간대 예측치
+  // ② 그 id 로 place
   const { data: places } = placeIds.length
     ? await supabase
         .from('place')
         .select(
-          'id, name, category, district, access_desc, fee, congestion_forecast(congestion_pct, forecast_date)',
+          'id, name, category, district, access_desc, fee, lat, lng',
         )
         .in('id', placeIds)
-        .eq('congestion_forecast.hour_slot', hour)
-        .lte('congestion_forecast.forecast_date', today)
-        .order('forecast_date', {
-          referencedTable: 'congestion_forecast',
-          ascending: false,
-        })
-        .limit(1, { referencedTable: 'congestion_forecast' })
     : { data: [] }
 
+  /*
+   * ③ 하루치 예측 — 목록 카드의 하루 흐름 막대에 쓴다.
+   *
+   * 예측을 place 안에 끼워 넣지 않고 따로 부르는 이유: 임베드에 걸리는
+   * limit 은 부모 한 건당 적용돼서 24행을 받으려면 24로 열어야 하는데,
+   * 그러면 여러 기준일이 섞여 들어와 어느 날 것인지 가릴 수 없다.
+   * 기준일을 먼저 하나 정하고 그 날의 행만 받는 편이 분명하다.
+   *
+   * 기준일은 오늘 이하의 최신 하루다. 배치가 모든 장소에 같은 날짜를 쓰므로
+   * 장소별로 따로 고르지 않는다.
+   */
+  const { data: latest } = await supabase
+    .from('congestion_forecast')
+    .select('forecast_date')
+    .lte('forecast_date', today)
+    .order('forecast_date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const { data: forecastRows } =
+    latest && placeIds.length
+      ? await supabase
+          .from('congestion_forecast')
+          .select('place_id, hour_slot, congestion_pct')
+          .in('place_id', placeIds)
+          .eq('forecast_date', latest.forecast_date)
+          .order('hour_slot')
+      : { data: [] }
+
+  const slotsByPlace = new Map<string, HourSlot[]>()
+  for (const row of forecastRows ?? []) {
+    const list = slotsByPlace.get(row.place_id) ?? []
+    list.push({ hour_slot: row.hour_slot, congestion_pct: row.congestion_pct })
+    slotsByPlace.set(row.place_id, list)
+  }
+
   const favorites: FavoritePlace[] = (places ?? [])
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      category: p.category,
-      district: p.district,
-      accessDesc: p.access_desc,
-      fee: p.fee,
-      congestionPct: p.congestion_forecast[0]?.congestion_pct ?? null,
-      addedAt: addedAtById.get(p.id) ?? '',
-    }))
+    .map((p) => {
+      const slots = slotsByPlace.get(p.id) ?? []
+
+      // 가장 붐비는 시각. 같은 값이면 이른 시각을 남긴다 — 피크가 시작되는
+      // 때를 알려주는 편이 "언제 피하면 되는지"에 더 쓸모 있다.
+      const peak = slots.reduce<HourSlot | null>(
+        (best, s) =>
+          best === null || s.congestion_pct > best.congestion_pct ? s : best,
+        null,
+      )
+
+      return {
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        district: p.district,
+        accessDesc: p.access_desc,
+        fee: p.fee,
+        congestionPct:
+          slots.find((s) => s.hour_slot === hour)?.congestion_pct ?? null,
+        slots,
+        // 하루가 통째로 0 이면(휴무일) 피크라고 부를 게 없다
+        peakHour: peak && peak.congestion_pct > 0 ? peak.hour_slot : null,
+        transitMinutes: parseWalkMinutes(p.access_desc),
+        lat: p.lat,
+        lng: p.lng,
+        addedAt: addedAtById.get(p.id) ?? '',
+      }
+    })
     // in() 은 순서를 보장하지 않는다. 담은 순서(최근 먼저)로 다시 세운다
     .sort((a, b) => b.addedAt.localeCompare(a.addedAt))
 

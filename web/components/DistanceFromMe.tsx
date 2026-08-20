@@ -20,6 +20,7 @@ export function DistanceFromMe({
   lat,
   lng,
   coords: providedCoords,
+  showLabel = true,
   className = '',
 }: {
   /** 대상 장소의 좌표. 없으면 거리를 낼 수 없다 */
@@ -27,6 +28,11 @@ export function DistanceFromMe({
   lng: number | null
   /** 위에서 이미 받아둔 사용자 좌표 */
   coords?: Coords | null
+  /**
+   * "내 위치에서" 머리말을 붙일지. 목록 카드처럼 near_me 아이콘이
+   * 이미 옆에 있는 자리에서는 끄는 편이 좁은 폭에 낫다.
+   */
+  showLabel?: boolean
   className?: string
 }) {
   // 좌표를 위에서 받았으면 스스로 요청하지 않는다
@@ -39,6 +45,9 @@ export function DistanceFromMe({
   const km = distanceKm(coords, { lat, lng })
 
   return (
-    <span className={className}>내 위치에서 {formatDistance(km)}</span>
+    <span className={className}>
+      {showLabel && '내 위치에서 '}
+      {formatDistance(km)}
+    </span>
   )
 }

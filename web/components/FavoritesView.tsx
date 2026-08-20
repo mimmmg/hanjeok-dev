@@ -5,6 +5,7 @@ import { useRef, useState } from 'react'
 import { FavoriteListItem } from '@/components/FavoriteListItem'
 import { GlanceCard } from '@/components/GlanceCard'
 import { Icon } from '@/components/Icon'
+import { useGeolocation } from '@/hooks/useGeolocation'
 import type { FavoritePlace } from '@/types/favorite'
 import { createClient } from '@/utils/supabase/client'
 
@@ -31,6 +32,14 @@ export function FavoritesView({
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [index, setIndex] = useState(0)
+
+  /*
+   * 위치는 이 화면에서 한 번만 받는다. 항목마다 요청하면 담아둔 개수만큼
+   * 권한 요청이 나가고, 그때마다 같은 좌표를 다시 받는다.
+   * 좌표는 여기서 거리 계산에만 쓰이고 서버로 가지 않는다 (CLAUDE.md §2).
+   */
+  const geo = useGeolocation()
+  const coords = geo.status === 'granted' ? geo.coords : null
 
   const trackRef = useRef<HTMLUListElement>(null)
 
@@ -141,6 +150,7 @@ export function FavoritesView({
               >
                 <FavoriteListItem
                   place={place}
+                  coords={coords}
                   onRemove={() => handleRemove(place.id)}
                   removing={removingId === place.id}
                 />
