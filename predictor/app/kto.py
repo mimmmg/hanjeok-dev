@@ -160,6 +160,22 @@ class TourApiClient:
                 break
         return collected
 
+    def fetch_place_detail(
+        self, *, content_id: str, content_type_id: str | int
+    ) -> dict:
+        """
+        한 장소의 이용정보 — 휴무일·이용시간·주차·입장료·문의처.
+
+        목록 API(areaBasedList)에는 없어서 장소마다 따로 불러야 한다.
+        장소 수만큼 호출이 늘기 때문에(현재 277곳) 개발계정 일 1,000건 한도를
+        의식해 한 번에 한 필드씩 쪼개 부르지 않고 이 하나로 끝낸다.
+        """
+        rows = self._get(
+            "detailIntro2",
+            {"contentId": content_id, "contentTypeId": content_type_id},
+        )
+        return rows[0] if rows else {}
+
     def fetch_concentration(self, *, signgu_cd: str) -> list[dict]:
         """
         한 자치구의 관광지별 향후 30일 집중률.

@@ -28,7 +28,7 @@ from app.kto import (
     SEOUL_SIGUNGU_CODES,
     TourApiClient,
 )
-from app.landmarks import LANDMARK_COORDS
+from app.landmarks import LANDMARKS
 from app.store import get_client, upsert_places
 from app.transform import clean_places
 
@@ -117,6 +117,7 @@ def run_place_sync_job(*, dry_run: bool = False) -> SyncResult:
 
     # ── 3. 합치기 ──
     rows: list[dict] = []
+    landmark_rows: list[dict] = []
     with_coords = 0
     # 이미 쓴 kto_content_id. 집중률의 서로 다른 이름 둘이 같은 TourAPI 장소로
     # 정규화되는 경우가 있어("창덕궁과 후원", "창덕궁 낙선재"), 그대로 두면
@@ -125,17 +126,27 @@ def run_place_sync_job(*, dry_run: bool = False) -> SyncResult:
 
     for name, district in place_district.items():
         info = detail_by_norm.get(normalize_name(name))
-        landmark = LANDMARK_COORDS.get(name)
+        landmark = LANDMARKS.get(name)
+
+        # TourAPI 에 없는 장소는 landmarks.py 에 직접 적어둔 정보를 쓴다.
+        # 상세 API 를 부를 contentid 가 없어 details.py 로도 채울 수 없기 때문이다.
+        extra: dict[str, str | None] = {}
 
         if info:
             lat, lng = info["lat"], info["lng"]
             address = info["address"]
             content_id = info["kto_content_id"]
-        elif landmark:
-            # TourAPI 에 없는 주요 관광지 — 좌표를 직접 채워둔 것
-            lat, lng = landmark
-            address = None
+        elif landmark and "lat" in landmark:
+            lat, lng = landmark["lat"], landmark["lng"]
+            address = landmark.get("address")
             content_id = ""
+            extra = {
+                "use_time": landmark.get("use_time"),
+                "rest_date": landmark.get("rest_date"),
+                "fee": landmark.get("fee"),
+                "parking": landmark.get("parking"),
+                "info_center": landmark.get("info_center"),
+            }
         else:
             lat = lng = None
             address = None
@@ -159,10 +170,21 @@ def run_place_sync_job(*, dry_run: bool = False) -> SyncResult:
                 "address": address,
                 "lat": lat,
                 "lng": lng,
-                "access_desc": None,
-                "fee": None,
             }
         )
+
+        # landmarks.py 에 적어둔 기본정보는 따로 모아 나중에 저장한다.
+        # 한 배치에 섞으면 PostgREST 가 키 집합을 통일하면서, 이 키가 없는
+        # 나머지 행의 컬럼을 null 로 덮어버린다 — details.py 가 채워둔
+        # 상세정보가 동기화 한 번에 통째로 지워졌다.
+        if extra:
+            landmark_rows.append(
+                {
+                    "kto_content_id": content_id,
+                    "name": name,
+                    **{k: v for k, v in extra.items() if v is not None},
+                }
+            )
 
     without_coords = len(rows) - with_coords
     notes.append(
@@ -182,7 +204,13 @@ def run_place_sync_job(*, dry_run: bool = False) -> SyncResult:
             len(place_district), len(detail), with_coords, without_coords, 0, notes
         )
 
-    written = upsert_places(get_client(), rows)
+    db = get_client()
+    written = upsert_places(db, rows)
+    # 기본정보는 별도 배치로 — 위 주석 참고
+    if landmark_rows:
+        upsert_places(db, landmark_rows)
+        notes.append(f"직접 적어둔 기본정보 {len(landmark_rows)}곳 반영")
+
     return SyncResult(
         concentration_places=len(place_district),
         tour_places=len(detail),

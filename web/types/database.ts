@@ -61,11 +61,15 @@ export type Database = {
           district: string | null
           fee: string | null
           id: string
+          info_center: string | null
           kto_content_id: string | null
           lat: number | null
           lng: number | null
           name: string
           name_en: string | null
+          parking: string | null
+          rest_date: string | null
+          use_time: string | null
         }
         Insert: {
           access_desc?: string | null
@@ -74,11 +78,15 @@ export type Database = {
           district?: string | null
           fee?: string | null
           id?: string
+          info_center?: string | null
           kto_content_id?: string | null
           lat?: number | null
           lng?: number | null
           name: string
           name_en?: string | null
+          parking?: string | null
+          rest_date?: string | null
+          use_time?: string | null
         }
         Update: {
           access_desc?: string | null
@@ -87,11 +95,15 @@ export type Database = {
           district?: string | null
           fee?: string | null
           id?: string
+          info_center?: string | null
           kto_content_id?: string | null
           lat?: number | null
           lng?: number | null
           name?: string
           name_en?: string | null
+          parking?: string | null
+          rest_date?: string | null
+          use_time?: string | null
         }
         Relationships: []
       }

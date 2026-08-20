@@ -44,7 +44,7 @@ def fetch_places(client: Client) -> list[dict]:
     """
     response = (
         client.table("place")
-        .select("id, name, district, access_desc, lat, lng, category")
+        .select("id, name, district, access_desc, lat, lng, category, rest_date")
         .execute()
     )
     return response.data or []

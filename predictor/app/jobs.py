@@ -17,6 +17,7 @@ from datetime import date, datetime, timedelta
 
 from app.config import SEOUL_TZ
 from app.kto import SEOUL_SIGUNGU_CODES, TourApiClient, classify_profile
+from app.restdays import is_closed_on
 from app.scoring import HourForecast, score_from_concentration
 from app.store import fetch_places, get_client, upsert_many
 from app.weather import fetch_hourly_safe, get_weather_source
@@ -120,6 +121,7 @@ def run_forecast_job(*, dry_run: bool = False) -> JobResult:
     target_days = [today + timedelta(days=offset) for offset in range(FORECAST_DAYS)]
     written = 0
     scored_places = 0
+    closed_count = 0
 
     for day in target_days:
         by_place: dict[str, list[HourForecast]] = {}
@@ -129,6 +131,16 @@ def run_forecast_job(*, dry_run: bool = False) -> JobResult:
             if rate is None:
                 continue
             db_place = place_by_name[name]
+
+            # 휴무일에는 혼잡도를 0 으로 둔다.
+            # 문 닫은 곳을 "여유롭다"고 추천하는 게 가장 큰 사고다.
+            if is_closed_on(db_place.get("rest_date"), day):
+                by_place[db_place["id"]] = [
+                    HourForecast(hour_slot=h, congestion_pct=0) for h in range(24)
+                ]
+                closed_count += 1
+                continue
+
             profile = classify_profile(name, db_place.get("category"))
             forecasts, _detail = score_from_concentration(
                 concentration_rate=rate,
@@ -144,6 +156,8 @@ def run_forecast_job(*, dry_run: bool = False) -> JobResult:
         if not dry_run:
             written += upsert_many(client, forecast_date=day, by_place=by_place)
 
+    if closed_count:
+        notes.append(f"휴무일이라 0 으로 둔 장소·날짜 조합 {closed_count}건")
     notes.append(
         f"장소 {len(rates)}곳 × {FORECAST_DAYS}일치 계산 "
         f"({target_days[0]} ~ {target_days[-1]})"

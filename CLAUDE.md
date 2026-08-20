@@ -74,6 +74,14 @@
 | lat / lng | numeric | 지도 링크·거리 계산·대안 후보 탐색 |
 | access_desc | text | 상세/대안카드 '접근성' |
 | fee | text | 상세/대안카드 '입장료' |
+| use_time | text | 이용시간 (KTO `detailIntro2`) |
+| rest_date | text | 휴무일. **예측 배치가 읽어 휴무일 혼잡도를 0으로 만든다** |
+| parking | text | 주차 |
+| info_center | text | 문의처 |
+
+**기본정보를 못 채우는 장소가 있다.** 집중률 API 에만 있고 TourAPI 에는 없는 장소(경복궁·창덕궁·종묘·광화문 등)는 `detailIntro2` 를 부를 `contentid` 가 없다. `predictor/app/landmarks.py` 에 직접 적는다.
+
+**휴무일을 예측에 반영한다.** 문 닫은 곳을 "여유롭다"고 추천하는 게 가장 큰 사고다. `rest_date` 는 자유 문장이라 요일 단위 정기 휴무만 읽고(`predictor/app/restdays.py`), 못 읽으면 예측을 그대로 진행한다 — 잘못 읽어 문 연 날을 닫혔다고 하는 쪽이 더 나쁘다.
 
 ### UserFavorite — 관심 장소함
 

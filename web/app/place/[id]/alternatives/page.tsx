@@ -7,7 +7,8 @@ import {
 } from '@/components/AlternativeCard'
 import { DeviceFrame } from '@/components/DeviceFrame'
 import { Icon } from '@/components/Icon'
-import { TRAVEL_MODE_LABEL, toTravelMode } from '@/types/travel'
+import { TravelModeToggle } from '@/components/TravelModeToggle'
+import { toTravelMode } from '@/types/travel'
 import { scoreAlternative } from '@/utils/alternativeScore'
 import { CONGESTION_THRESHOLDS } from '@/utils/congestionLevel'
 import { distanceKm } from '@/utils/distance'
@@ -122,28 +123,33 @@ export default async function AlternativesPage({
     <DeviceFrame title="대안 비교" backHref={`/place/${id}`}>
       <div className="flex flex-col gap-4 px-6 pt-6 pb-10">
         <header className="zin">
-          <p className="font-display text-muted text-caption font-semibold tracking-[0.08em] uppercase">
-            {base.district ?? '서울'} · {TRAVEL_MODE_LABEL[mode]} 기준
-          </p>
-          <h2 className="font-display mt-2 text-title font-bold tracking-[-0.01em]">
-{base.name} 근처 가볼 만한 곳
-          </h2>
-          <p className="text-body mt-2 text-label leading-relaxed">
-            {basePct !== null &&
-              (isCrowded ? (
-                <>
-                  지금 {base.name}은(는){' '}
-                  <strong className="text-ink tabular">{basePct}</strong>로
-                  붐빕니다.{' '}
-                </>
-              ) : (
-                <>
-                  {base.name}은(는) 지금{' '}
-                  <strong className="text-ink tabular">{basePct}</strong>로
-                  여유롭습니다. 겸사겸사 들를 만한 곳입니다.{' '}
-                </>
-              ))}
-            혼잡도와 접근성을 함께 계산해 {alternatives.length}곳을 골랐습니다.
+          {/* 제목 옆에 기준 토글을 붙인다 — 화면의 주된 조작이 아니라 옆단이다 */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-display text-muted text-caption font-semibold tracking-[0.08em] uppercase">
+                {base.district ?? '서울'}
+              </p>
+              <h2 className="font-display mt-1.5 text-title font-bold tracking-[-0.01em]">
+                {base.name} 근처 가볼 만한 곳
+              </h2>
+            </div>
+
+            {alternatives.length > 0 && (
+              <TravelModeToggle
+                current={mode}
+                basePath={`/place/${id}/alternatives`}
+              />
+            )}
+          </div>
+
+          <p className="text-muted mt-2 text-label leading-relaxed">
+            {basePct !== null && (
+              <>
+                <strong className="text-ink tabular">{basePct}</strong>
+                {isCrowded ? ' 혼잡' : ' 여유'} ·{' '}
+              </>
+            )}
+            {mode === 'walk' ? '도보 3km' : '차 15km'} 안에서 {alternatives.length}곳
           </p>
         </header>
 

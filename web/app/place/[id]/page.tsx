@@ -5,8 +5,8 @@ import { CongestionGauge } from '@/components/CongestionGauge'
 import { DeviceFrame } from '@/components/DeviceFrame'
 import { DistanceFromMe } from '@/components/DistanceFromMe'
 import { FavoriteHeart } from '@/components/FavoriteHeart'
+import { NearbyLink } from '@/components/NearbyLink'
 import { Icon } from '@/components/Icon'
-import { PlaceDetailActions } from '@/components/PlaceDetailActions'
 import type { HourSlot } from '@/types/forecast'
 import {
   CONGESTION_LABEL,
@@ -53,7 +53,7 @@ export default async function PlaceDetailPage({
   const { data: place } = await supabase
     .from('place')
     .select(
-      'id, name, name_en, district, category, address, access_desc, fee, lat, lng',
+      'id, name, name_en, district, category, address, access_desc, fee, lat, lng, rest_date, use_time, parking, info_center',
     )
     .eq('id', id)
     .maybeSingle()
@@ -199,9 +199,9 @@ export default async function PlaceDetailPage({
           </section>
         )}
 
-        {/* ── 조작부 ── */}
+        {/* ── 근처 장소 보기 ── */}
         <div className="zin [animation-delay:0.12s]">
-          <PlaceDetailActions
+          <NearbyLink
             placeId={place.id}
             placeName={place.name}
             currentPct={currentPct}
@@ -214,8 +214,12 @@ export default async function PlaceDetailPage({
             {(
               [
                 ['주소', place.address],
-                ['접근성', place.access_desc],
+                ['이용시간', place.use_time],
+                ['휴무일', place.rest_date],
                 ['입장료', place.fee],
+                ['주차', place.parking],
+                ['접근성', place.access_desc],
+                ['문의', place.info_center],
               ] as const
             ).map(([label, value]) =>
               value ? (
@@ -223,7 +227,9 @@ export default async function PlaceDetailPage({
                   <dt className="font-display text-muted text-caption font-semibold tracking-[0.08em] uppercase">
                     {label}
                   </dt>
-                  <dd className="text-body mt-1 text-ui">{value}</dd>
+                  <dd className="text-body mt-1 text-ui whitespace-pre-line">
+                    {value}
+                  </dd>
                 </div>
               ) : null,
             )}
