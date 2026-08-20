@@ -32,6 +32,7 @@ export const ICON_NAMES = [
   'list',
   'map',
   'navigation',
+  'near_me',
   'progress_activity',
   'search',
   'sensors',

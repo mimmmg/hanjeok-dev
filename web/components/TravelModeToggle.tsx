@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Icon } from '@/components/Icon'
+import type { AlternativeSort } from '@/types/alternativeSort'
 import { TRAVEL_MODE_LABEL, TRAVEL_MODES, type TravelMode } from '@/types/travel'
 
 /**
@@ -18,9 +19,15 @@ import { TRAVEL_MODE_LABEL, TRAVEL_MODES, type TravelMode } from '@/types/travel
  */
 export function TravelModeToggle({
   current,
+  sort,
   basePath,
 }: {
   current: TravelMode
+  /**
+   * 정렬 기준을 그대로 물고 간다. 안 넘기면 이동수단을 바꿀 때마다
+   * 정렬이 기본값으로 되돌아가, 방금 고른 기준이 말없이 풀린다.
+   */
+  sort: AlternativeSort
   /** 쿼리를 붙일 경로. 예: /place/{id}/alternatives */
   basePath: string
 }) {
@@ -35,7 +42,7 @@ export function TravelModeToggle({
         return (
           <Link
             key={mode}
-            href={`${basePath}?mode=${mode}`}
+            href={`${basePath}?mode=${mode}&sort=${sort}`}
             // 순위만 바뀌므로 스크롤을 맨 위로 되돌리지 않는다
             scroll={false}
             aria-current={active ? 'true' : undefined}
