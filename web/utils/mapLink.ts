@@ -19,9 +19,17 @@ import type { IconName } from '@/utils/icons'
 
 export type MapProvider = {
   key: 'kakao' | 'naver'
+  /**
+   * 각 사의 공식 표기를 그대로 쓴다. 카카오는 "카카오맵"(붙여쓰기),
+   * 네이버는 "네이버 지도"(띄어쓰기)다. "맵"과 "지도"가 섞이는 건
+   * 두 회사가 그렇게 이름 지었기 때문이고, 임의로 통일하면 오히려
+   * 사용자가 아는 이름과 달라진다.
+   */
   label: string
   icon: IconName
   url: string
+  /** 버튼 배경에 쓸 브랜드 색 클래스 */
+  brandClass: string
 }
 
 export function mapProviders({
@@ -46,12 +54,14 @@ export function mapProviders({
         label: '카카오맵',
         icon: 'map',
         url: `https://map.kakao.com/?q=${query}`,
+        brandClass: 'bg-kakao',
       },
       {
         key: 'naver',
-        label: '네이버지도',
+        label: '네이버 지도',
         icon: 'navigation',
         url: `https://map.naver.com/p/search/${query}`,
+        brandClass: 'bg-naver',
       },
     ]
   }
@@ -63,13 +73,15 @@ export function mapProviders({
       icon: 'map',
       // link/to/{이름},{위도},{경도} — 목적지 길찾기가 바로 열린다
       url: `https://map.kakao.com/link/to/${encodedName},${lat},${lng}`,
+      brandClass: 'bg-kakao',
     },
     {
       key: 'naver',
-      label: '네이버지도',
+      label: '네이버 지도',
       icon: 'navigation',
       // v5 경로 형식은 경도,위도 순서다 — 뒤집으면 엉뚱한 곳으로 간다
       url: `https://map.naver.com/p/directions/-/${lng},${lat},${encodedName}/-/transit`,
+      brandClass: 'bg-naver',
     },
   ]
 }

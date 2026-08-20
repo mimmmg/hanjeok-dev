@@ -242,7 +242,7 @@ export default async function PlaceDetailPage({
                     href={provider.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="font-display text-ink border-line-3 hover:border-muted flex min-h-tap flex-1 items-center justify-center gap-1.5 rounded-full border text-label font-semibold transition-colors"
+                    className={`font-display flex min-h-tap flex-1 items-center justify-center gap-1.5 rounded-full text-label font-semibold text-[#191919] transition-opacity hover:opacity-85 ${provider.brandClass}`}
                   >
                     <Icon name={provider.icon} size={18} />
                     {provider.label}
