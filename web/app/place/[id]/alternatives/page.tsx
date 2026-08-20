@@ -12,7 +12,7 @@ import { toTravelMode } from '@/types/travel'
 import { scoreAlternative } from '@/utils/alternativeScore'
 import { CONGESTION_THRESHOLDS } from '@/utils/congestionLevel'
 import { distanceKm } from '@/utils/distance'
-import { seoulHour } from '@/utils/seoulTime'
+import { seoulHour, seoulToday } from '@/utils/seoulTime'
 import { createClient } from '@/utils/supabase/server'
 
 export const metadata: Metadata = { title: '대안 비교 — 한적' }
@@ -33,6 +33,9 @@ export default async function AlternativesPage({
 
   const supabase = await createClient()
   const hour = seoulHour()
+  // 배치가 7일치를 미리 쓰므로 조회에 오늘 상한을 걸어야 한다.
+  // 없으면 기준 장소와 후보 모두 미래 날짜 값으로 비교돼 순위가 뒤바뀐다.
+  const today = seoulToday()
 
   // ── 기준 장소 ──
   const { data: base } = await supabase
@@ -48,6 +51,7 @@ export default async function AlternativesPage({
     .select('congestion_pct')
     .eq('place_id', id)
     .eq('hour_slot', hour)
+    .lte('forecast_date', today)
     .order('forecast_date', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -73,6 +77,7 @@ export default async function AlternativesPage({
     .eq('district', base.district ?? '')
     .neq('id', id)
     .eq('congestion_forecast.hour_slot', hour)
+    .lte('congestion_forecast.forecast_date', today)
     .order('forecast_date', {
       referencedTable: 'congestion_forecast',
       ascending: false,

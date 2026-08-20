@@ -65,11 +65,16 @@ export default async function PlaceDetailPage({
    * 하루치 24행을 가져온다. forecast_date 를 고정하지 않고 최신 기준일을
    * 먼저 찾는 이유: 오늘치가 아직 없어도 최근 예측치로 그래프를 그려야
    * 화면이 비지 않는다 (PRD ⑦ 가용성).
+   *
+   * 단, 오늘을 넘는 날짜는 제외한다. 배치가 7일치를 미리 써 두기 때문에
+   * 상한이 없으면 내림차순 1건이 늘 미래 날짜가 되고, 화면은 다음 주
+   * 혼잡도를 "지금"으로 보여준다. 물러날 방향은 과거뿐이다.
    */
   const { data: latest } = await supabase
     .from('congestion_forecast')
     .select('forecast_date')
     .eq('place_id', id)
+    .lte('forecast_date', today)
     .order('forecast_date', { ascending: false })
     .limit(1)
     .maybeSingle()

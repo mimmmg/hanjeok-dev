@@ -38,6 +38,9 @@ export default async function SearchResultsPage({
    * forecast_date 를 내림차순으로 1건만 가져오는 이유:
    * 오늘치가 없으면 가장 최근 예측치라도 보여주기 위함이다. 예측 배치가
    * 멈춰도 화면이 비지 않아야 한다는 PRD ⑦ 가용성 요구를 조회 단에서 지킨다.
+   *
+   * 오늘을 상한으로 거는 이유: 배치가 7일치를 미리 쓰므로 상한이 없으면
+   * 늘 미래 날짜가 뽑힌다. 그러면 "한적한 순" 정렬까지 다음 주 기준이 된다.
    */
   const { data, error } = await supabase
     .from('place')
@@ -46,6 +49,7 @@ export default async function SearchResultsPage({
     )
     .ilike('name', `%${escapeLikePattern(query)}%`)
     .eq('congestion_forecast.hour_slot', hour)
+    .lte('congestion_forecast.forecast_date', today)
     .order('forecast_date', {
       referencedTable: 'congestion_forecast',
       ascending: false,
